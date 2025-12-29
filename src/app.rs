@@ -165,7 +165,7 @@ impl App {
                         }
 
                         if is_mouse_button_pressed(MouseButton::Right) {
-                            let dev = self.session.devices.get(&id).unwrap();
+                            let dev = self.session.get_device(id).unwrap();
                             if dev.has_output() {
                                 if is_key_down(KeyCode::LeftShift)
                                     || is_key_down(KeyCode::RightShift)
@@ -208,7 +208,7 @@ impl App {
                 self.cursor = CursorState::DraggingSelectedDevices(m_pos);
 
                 if is_mouse_button_released(MouseButton::Left) {
-                    self.session.snap_selected_to_grid();
+                    self.session.snap_selected_devices();
                     self.cursor = CursorState::Idle;
                 }
             }
@@ -316,24 +316,25 @@ impl App {
                 .title_bar(false)
                 .fixed_pos(pos.to_array())
                 .show(ctx, |ui| {
+                    let world_pos = self.draw_ctx.viewport_to_world(pos);
                     if ui.button("Clock").clicked() {
                         let clock = Clock::new(self.draw_ctx.viewport_to_world(pos));
-                        self.session.add_device(Box::new(clock));
+                        self.session.add_device(Box::new(clock), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Trigger").clicked() {
                         let trigger = Trigger::new(self.draw_ctx.viewport_to_world(pos));
-                        self.session.add_device(Box::new(trigger));
+                        self.session.add_device(Box::new(trigger), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Latch").clicked() {
                         let latch = Latch::new(self.draw_ctx.viewport_to_world(pos));
-                        self.session.add_device(Box::new(latch));
+                        self.session.add_device(Box::new(latch), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Gate").clicked() {
                         let gate = Gate::new(self.draw_ctx.viewport_to_world(pos));
-                        self.session.add_device(Box::new(gate));
+                        self.session.add_device(Box::new(gate), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Note").clicked() {
@@ -341,7 +342,7 @@ impl App {
                             self.draw_ctx.viewport_to_world(pos),
                             self.midi_config.get_event_sender(),
                         );
-                        self.session.add_device(Box::new(note));
+                        self.session.add_device(Box::new(note), world_pos);
                         self.context_menu = None;
                     }
                 });
@@ -398,7 +399,7 @@ impl App {
         });
 
         if let [selected_id] = self.session.selected.as_slice() {
-            match self.session.devices.get_mut(&selected_id) {
+            match self.session.get_device_mut(*selected_id) {
                 Some(dev) => {
                     egui::Window::new("Edit Device")
                         .anchor(Align2::RIGHT_TOP, [-10.0, 30.0])
@@ -427,7 +428,7 @@ impl App {
             | CursorState::PanningViewport(_) => {}
 
             CursorState::DraggingLooseWire(from_id, wire_type) => {
-                let from_dev = self.session.devices.get(&from_id).unwrap();
+                let from_dev = self.session.get_device(from_id).unwrap();
                 draw_wire_from_device(
                     &self.draw_ctx,
                     from_dev.as_ref(),
@@ -437,8 +438,8 @@ impl App {
                 );
             }
             CursorState::DraggingConnectedWire(from_id, to_id, wire_type) => {
-                let from_dev = self.session.devices.get(&from_id).unwrap();
-                let to_dev = self.session.devices.get(&to_id).unwrap();
+                let from_dev = self.session.get_device(from_id).unwrap();
+                let to_dev = self.session.get_device(to_id).unwrap();
                 draw_wire_between_devices(
                     &self.draw_ctx,
                     from_dev.as_ref(),
@@ -448,7 +449,7 @@ impl App {
                 );
             }
             CursorState::DraggingInvalidWire(from_id, wire_type) => {
-                let from_dev = self.session.devices.get(&from_id).unwrap();
+                let from_dev = self.session.get_device(from_id).unwrap();
                 draw_wire_from_device(
                     &self.draw_ctx,
                     from_dev.as_ref(),

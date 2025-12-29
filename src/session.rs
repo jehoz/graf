@@ -13,8 +13,6 @@ use crate::{
     drawing_utils::draw_wire_between_devices,
 };
 
-const SNAP_GRID_SIZE: f32 = 16.0;
-
 pub struct UpdateContext {
     pub beat_clock: f32,
     pub free_clock: Duration,
@@ -41,12 +39,52 @@ impl UpdateContext {
     }
 }
 
+const DEVICE_WIDTH: f32 = 24.0;
+
+const SNAP_GRID_SIZE: f32 = 16.0;
+
+// perhaps not the most elegant solution but it was the least bad way I could think of...
+#[derive(Clone, Copy)]
+struct DevicePosition {
+    raw: Vec2,
+    snapped: Vec2,
+}
+
+impl DevicePosition {
+    pub fn new() -> Self {
+        DevicePosition {
+            raw: Vec2::ZERO,
+            snapped: Vec2::ZERO,
+        }
+    }
+
+    pub fn modify(&mut self, delta: Vec2) {
+        self.raw += delta;
+        self.snapped = (self.raw / SNAP_GRID_SIZE).round() * SNAP_GRID_SIZE;
+    }
+
+    pub fn snap(&mut self) {
+        self.raw = self.snapped;
+    }
+}
+
+impl From<Vec2> for DevicePosition {
+    fn from(value: Vec2) -> Self {
+        let mut p = DevicePosition::new();
+        p.modify(value);
+        p
+    }
+}
+
 pub struct Session {
-    pub devices: HashMap<DeviceId, Box<dyn Device>>,
+    pub devices: HashMap<DeviceId, (DevicePosition, Box<dyn Device>)>,
     pub circuit: Dag,
 
     pub selected: Vec<DeviceId>,
-    pub clipboard: (HashMap<DeviceId, Box<dyn Device>>, Vec<Wire>),
+    pub clipboard: (
+        HashMap<DeviceId, (DevicePosition, Box<dyn Device>)>,
+        Vec<Wire>,
+    ),
 
     pub update_ctx: UpdateContext,
 }
@@ -64,10 +102,10 @@ impl Session {
         }
     }
 
-    pub fn add_device(&mut self, device: Box<dyn Device>) -> DeviceId {
+    pub fn add_device(&mut self, device: Box<dyn Device>, position: Vec2) -> DeviceId {
         let id = self.circuit.add_device();
-        self.devices.insert(id, device);
-        self.snap_device_to_grid(id);
+        let pos = DevicePosition::from(position);
+        self.devices.insert(id, (pos, device));
         id
     }
 
@@ -82,13 +120,31 @@ impl Session {
         self.circuit.remove_wire(from, to)
     }
 
+    pub fn get_device(&self, device_id: DeviceId) -> Option<&Box<dyn Device>> {
+        self.devices.get(&device_id).map(|(_, dev)| dev)
+    }
+
+    pub fn get_device_mut(&mut self, device_id: DeviceId) -> Option<&mut Box<dyn Device>> {
+        self.devices.get_mut(&device_id).map(|(_, dev)| dev)
+    }
+
     pub fn get_device_at(&self, position: Vec2) -> Option<DeviceId> {
-        for (id, device) in self.devices.iter() {
-            if device.is_point_inside(position) {
-                return Some(*id);
+        // if inside multiple devices' bounding boxes, get closest one
+        let mut min_dist = f32::INFINITY;
+        let mut closest = None;
+        for (id, (pos, _)) in self.devices.iter() {
+            let dx = (pos.snapped.x - position.x).abs();
+            let dy = (pos.snapped.y - position.y).abs();
+            if dx <= DEVICE_WIDTH && dy <= DEVICE_WIDTH {
+                let d = position.distance(pos.snapped);
+                if d < min_dist {
+                    min_dist = d;
+                    closest = Some(*id);
+                }
             }
         }
-        None
+
+        closest
     }
 
     pub fn get_wire_at(&self, position: Vec2) -> Option<Wire> {
@@ -116,7 +172,7 @@ impl Session {
     }
 
     pub fn can_connect(&self, from: DeviceId, to: DeviceId) -> bool {
-        let to_dev = self.devices.get(&to).unwrap();
+        let (_, to_dev) = self.devices.get(&to).unwrap();
         if to_dev.input_arity() == Arity::Nullary {
             return false;
         } else if to_dev.input_arity() == Arity::Unary && self.circuit.incoming(to).count() > 0 {
@@ -127,26 +183,18 @@ impl Session {
     }
 
     pub fn device_position(&self, id: DeviceId) -> Option<Vec2> {
-        self.devices.get(&id).map(|d| d.get_position())
+        self.devices.get(&id).map(|(p, _)| p.snapped)
     }
 
     pub fn move_device(&mut self, device_id: DeviceId, delta: Vec2) {
-        if let Some(device) = self.devices.get_mut(&device_id) {
-            let new_pos = device.get_position() + delta;
-            device.set_position(new_pos);
+        if let Some((position, _)) = self.devices.get_mut(&device_id) {
+            position.modify(delta);
         }
     }
 
-    pub fn move_device_to(&mut self, device_id: DeviceId, position: Vec2) {
-        if let Some(device) = self.devices.get_mut(&device_id) {
-            device.set_position(position);
-        }
-    }
-
-    pub fn snap_device_to_grid(&mut self, device_id: DeviceId) {
-        if let Some(device) = self.devices.get_mut(&device_id) {
-            let snapped = (device.get_position() / SNAP_GRID_SIZE).round() * SNAP_GRID_SIZE;
-            device.set_position(snapped);
+    pub fn snap_device_position(&mut self, device_id: DeviceId) {
+        if let Some((position, _)) = self.devices.get_mut(&device_id) {
+            position.snap();
         }
     }
 
@@ -161,8 +209,8 @@ impl Session {
     }
 
     pub fn select_devices_in_rect(&mut self, rect: Rect) {
-        for (id, device) in self.devices.iter() {
-            if rect.contains(device.get_position()) {
+        for (id, (pos, _)) in self.devices.iter() {
+            if rect.contains(pos.snapped) {
                 self.selected.push(*id);
             }
         }
@@ -170,15 +218,13 @@ impl Session {
 
     pub fn move_selected_devices(&mut self, delta: Vec2) {
         for dev_id in self.selected.iter() {
-            let pos = self.device_position(*dev_id).unwrap() + delta;
-            self.devices.get_mut(dev_id).map(|d| d.set_position(pos));
+            self.devices.get_mut(dev_id).map(|(p, _)| p.modify(delta));
         }
     }
 
-    pub fn snap_selected_to_grid(&mut self) {
-        let selected = self.selected.clone();
-        for dev_id in selected {
-            self.snap_device_to_grid(dev_id);
+    pub fn snap_selected_devices(&mut self) {
+        for dev_id in self.selected.iter() {
+            self.devices.get_mut(dev_id).map(|(p, _)| p.snap());
         }
     }
 
@@ -195,21 +241,20 @@ impl Session {
         let mut devices = HashMap::new();
         let mut top_left = Vec2::new(f32::INFINITY, f32::INFINITY);
         for dev_id in &self.selected {
-            if let Some(device) = self.devices.get(&dev_id) {
-                let pos = device.get_position();
-                if pos.x < top_left.x {
-                    top_left.x = pos.x;
+            if let Some((pos, device)) = self.devices.get(&dev_id) {
+                if pos.snapped.x < top_left.x {
+                    top_left.x = pos.snapped.x;
                 }
-                if pos.y < top_left.y {
-                    top_left.y = pos.y;
+                if pos.snapped.y < top_left.y {
+                    top_left.y = pos.snapped.y;
                 }
-                devices.insert(*dev_id, device.clone_dyn());
+                devices.insert(*dev_id, (*pos, device.clone_dyn()));
             }
         }
 
         // set device positions to be relative to bounding box top-left corner
-        for (_, device) in devices.iter_mut() {
-            device.set_position(device.get_position() - top_left);
+        for (_, (pos, _)) in devices.iter_mut() {
+            pos.modify(-top_left);
         }
 
         let mut edges = Vec::new();
@@ -226,15 +271,14 @@ impl Session {
         let (devices, edges) = &self.clipboard;
 
         let mut new_devices = HashMap::new();
-        for (id, device) in devices.iter() {
-            new_devices.insert(*id, device.clone_dyn());
+        for (id, (pos, device)) in devices.iter() {
+            new_devices.insert(*id, (pos.clone(), device.clone_dyn()));
         }
         let edges = edges.clone();
 
         let mut dev_id_map = HashMap::new();
-        for (old_id, device) in new_devices.drain() {
-            let new_id = self.add_device(device);
-            self.move_device(new_id, position);
+        for (old_id, (pos, device)) in new_devices.drain() {
+            let new_id = self.add_device(device, pos.raw + position);
             dev_id_map.insert(old_id, new_id);
         }
 
@@ -259,7 +303,7 @@ impl Session {
         self.update_ctx.free_clock = Duration::ZERO;
         self.update_ctx.last_update = Instant::now();
 
-        for dev in self.devices.values_mut() {
+        for (_, dev) in self.devices.values_mut() {
             dev.reset();
         }
     }
@@ -286,7 +330,7 @@ impl Session {
                 })
                 .collect();
 
-            let dev = self.devices.get_mut(dev_id).unwrap();
+            let (_, dev) = self.devices.get_mut(dev_id).unwrap();
             if let Some(output) = dev.update(&mut self.update_ctx, inputs) {
                 device_outputs.insert(*dev_id, output);
             }
@@ -297,8 +341,8 @@ impl Session {
 
     pub fn draw(&self, draw_ctx: &DrawContext) {
         for wire in self.circuit.wires() {
-            let from_dev = self.devices.get(&wire.from).unwrap();
-            let to_dev = self.devices.get(&wire.to).unwrap();
+            let (_, from_dev) = self.devices.get(&wire.from).unwrap();
+            let (_, to_dev) = self.devices.get(&wire.to).unwrap();
             draw_wire_between_devices(
                 draw_ctx,
                 from_dev.as_ref(),
@@ -308,13 +352,10 @@ impl Session {
             );
         }
 
-        for (dev_id, device) in &self.devices {
-            // temporary until i move position out of device struct
-            let pos = device.get_position();
-
+        for (dev_id, (pos, device)) in &self.devices {
             device.draw(
                 draw_ctx,
-                draw_ctx.world_to_viewport(pos),
+                draw_ctx.world_to_viewport(pos.snapped),
                 24.0,
                 self.selected.contains(dev_id),
             );
