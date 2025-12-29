@@ -10,7 +10,7 @@ use crate::{
     app::DrawContext,
     dag::{self, Dag, DeviceId, Wire, WireType},
     devices::{Arity, Device},
-    drawing_utils::draw_wire_between_devices,
+    drawing_utils::{draw_wire_between_devices, DEVICE_WIDTH},
 };
 
 pub struct UpdateContext {
@@ -38,8 +38,6 @@ impl UpdateContext {
         }
     }
 }
-
-const DEVICE_WIDTH: f32 = 24.0;
 
 const SNAP_GRID_SIZE: f32 = 16.0;
 
@@ -341,12 +339,12 @@ impl Session {
 
     pub fn draw(&self, draw_ctx: &DrawContext) {
         for wire in self.circuit.wires() {
-            let (_, from_dev) = self.devices.get(&wire.from).unwrap();
-            let (_, to_dev) = self.devices.get(&wire.to).unwrap();
+            let (from_pos, _) = self.devices.get(&wire.from).unwrap();
+            let (to_pos, _) = self.devices.get(&wire.to).unwrap();
             draw_wire_between_devices(
                 draw_ctx,
-                from_dev.as_ref(),
-                to_dev.as_ref(),
+                from_pos.snapped,
+                to_pos.snapped,
                 wire.wire_type,
                 draw_ctx.colors.fg_1,
             );

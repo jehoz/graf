@@ -428,31 +428,31 @@ impl App {
             | CursorState::PanningViewport(_) => {}
 
             CursorState::DraggingLooseWire(from_id, wire_type) => {
-                let from_dev = self.session.get_device(from_id).unwrap();
+                let from_pos = self.session.device_position(from_id).unwrap();
                 draw_wire_from_device(
                     &self.draw_ctx,
-                    from_dev.as_ref(),
+                    from_pos,
                     m_pos,
                     wire_type,
                     self.draw_ctx.colors.fg_2,
                 );
             }
             CursorState::DraggingConnectedWire(from_id, to_id, wire_type) => {
-                let from_dev = self.session.get_device(from_id).unwrap();
-                let to_dev = self.session.get_device(to_id).unwrap();
+                let from_pos = self.session.device_position(from_id).unwrap();
+                let to_pos = self.session.device_position(to_id).unwrap();
                 draw_wire_between_devices(
                     &self.draw_ctx,
-                    from_dev.as_ref(),
-                    to_dev.as_ref(),
+                    from_pos,
+                    to_pos,
                     wire_type,
                     self.draw_ctx.colors.fg_0,
                 );
             }
             CursorState::DraggingInvalidWire(from_id, wire_type) => {
-                let from_dev = self.session.get_device(from_id).unwrap();
+                let from_pos = self.session.device_position(from_id).unwrap();
                 draw_wire_from_device(
                     &self.draw_ctx,
-                    from_dev.as_ref(),
+                    from_pos,
                     m_pos,
                     wire_type,
                     self.draw_ctx.colors.error,

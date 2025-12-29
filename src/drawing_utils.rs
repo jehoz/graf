@@ -5,7 +5,9 @@ use macroquad::{
     shapes::{draw_line, draw_poly},
 };
 
-use crate::{app::DrawContext, dag::WireType, devices::Device};
+use crate::{app::DrawContext, dag::WireType};
+
+pub const DEVICE_WIDTH: f32 = 24.0;
 
 pub struct ColorPalette {
     pub fg_0: Color,
@@ -78,26 +80,36 @@ pub fn draw_wire(from: Vec2, to: Vec2, wire_type: WireType, color: Color) {
     }
 }
 
-pub fn draw_wire_from_device<D: Device + ?Sized>(
+// computes the point on a given circle's perimeter that is closest to another point
+pub fn closest_point_on_circle(center: Vec2, radius: f32, point: Vec2) -> Vec2 {
+    let delta = point - center;
+    center + delta.normalize() * radius
+}
+
+pub fn draw_wire_from_device(
     draw_ctx: &DrawContext,
-    from_dev: &D,
+    device_position: Vec2,
     to: Vec2,
     wire_type: WireType,
     color: Color,
 ) {
-    let from_pos = from_dev.closest_border_point(draw_ctx.viewport_to_world(to), 3.0);
+    let from_pos = closest_point_on_circle(
+        device_position,
+        DEVICE_WIDTH / 2.0 + 3.0,
+        draw_ctx.viewport_to_world(to),
+    );
     draw_wire(draw_ctx.world_to_viewport(from_pos), to, wire_type, color);
 }
 
-pub fn draw_wire_between_devices<D: Device + ?Sized>(
+pub fn draw_wire_between_devices(
     draw_ctx: &DrawContext,
-    from_dev: &D,
-    to_dev: &D,
+    from_device: Vec2,
+    to_device: Vec2,
     wire_type: WireType,
     color: Color,
 ) {
-    let from_pos = from_dev.closest_border_point(to_dev.get_position(), 3.0);
-    let to_pos = to_dev.closest_border_point(from_dev.get_position(), 3.0);
+    let from_pos = closest_point_on_circle(from_device, DEVICE_WIDTH / 2.0 + 3.0, to_device);
+    let to_pos = closest_point_on_circle(to_device, DEVICE_WIDTH / 2.0 + 3.0, from_device);
     draw_wire(
         draw_ctx.world_to_viewport(from_pos),
         draw_ctx.world_to_viewport(to_pos),
