@@ -8,22 +8,18 @@ use egui::{FontId, RichText};
 use crate::session::UpdateContext;
 use crate::{
     app::DrawContext,
-    devices::{Arity, Device, LATCH_RADIUS},
+    devices::{Arity, Device},
 };
 
 #[derive(Clone)]
 pub struct Latch {
-    position: Vec2,
-
     is_on: bool,
     prev_input: bool,
 }
 
 impl Latch {
-    pub fn new(position: Vec2) -> Self {
+    pub fn new() -> Self {
         Latch {
-            position,
-
             is_on: false,
             prev_input: false,
         }
@@ -31,23 +27,6 @@ impl Latch {
 }
 
 impl Device for Latch {
-    fn get_position(&self) -> Vec2 {
-        self.position
-    }
-
-    fn set_position(&mut self, pos: Vec2) {
-        self.position = pos;
-    }
-
-    fn closest_border_point(&self, point: Vec2, padding: f32) -> Vec2 {
-        let delta = point - self.position;
-        self.position + delta.normalize() * (LATCH_RADIUS + padding)
-    }
-
-    fn is_point_inside(&self, pt: Vec2) -> bool {
-        self.position.distance(pt) <= LATCH_RADIUS
-    }
-
     fn update(&mut self, _ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         let input_on = inputs.first().map(|x| *x).unwrap_or(false);
 

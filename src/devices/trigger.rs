@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use macroquad::{
     math::Vec2,
-    shapes::{draw_circle, draw_circle_lines, draw_poly, draw_poly_lines},
+    shapes::{draw_poly, draw_poly_lines},
 };
 
 use egui::{DragValue, FontId, RichText, Slider};
@@ -10,13 +10,11 @@ use egui::{DragValue, FontId, RichText, Slider};
 use crate::session::UpdateContext;
 use crate::{
     app::DrawContext,
-    devices::{Arity, Device, TRIGGER_RADIUS},
+    devices::{Arity, Device},
 };
 
 #[derive(Clone)]
 pub struct Trigger {
-    position: Vec2,
-
     // duration in milliseconds that trigger will stay on after being set off
     duration: f32,
 
@@ -33,9 +31,8 @@ pub struct Trigger {
 }
 
 impl Trigger {
-    pub fn new(position: Vec2) -> Self {
+    pub fn new() -> Self {
         Trigger {
-            position,
             duration: 500.0,
             bpm_sync: false,
             bpm_duration: (1, 4),
@@ -64,23 +61,6 @@ impl Trigger {
 }
 
 impl Device for Trigger {
-    fn get_position(&self) -> Vec2 {
-        self.position
-    }
-
-    fn set_position(&mut self, pos: Vec2) {
-        self.position = pos;
-    }
-
-    fn closest_border_point(&self, point: Vec2, padding: f32) -> Vec2 {
-        let delta = point - self.position;
-        self.position + delta.normalize() * (TRIGGER_RADIUS + padding)
-    }
-
-    fn is_point_inside(&self, pt: Vec2) -> bool {
-        self.position.distance(pt) <= TRIGGER_RADIUS
-    }
-
     fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         let input_on = inputs.first().map(|x| *x).unwrap_or(false);
         if self.retrigger_mode {

@@ -318,30 +318,27 @@ impl App {
                 .show(ctx, |ui| {
                     let world_pos = self.draw_ctx.viewport_to_world(pos);
                     if ui.button("Clock").clicked() {
-                        let clock = Clock::new(self.draw_ctx.viewport_to_world(pos));
+                        let clock = Clock::new();
                         self.session.add_device(Box::new(clock), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Trigger").clicked() {
-                        let trigger = Trigger::new(self.draw_ctx.viewport_to_world(pos));
+                        let trigger = Trigger::new();
                         self.session.add_device(Box::new(trigger), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Latch").clicked() {
-                        let latch = Latch::new(self.draw_ctx.viewport_to_world(pos));
+                        let latch = Latch::new();
                         self.session.add_device(Box::new(latch), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Gate").clicked() {
-                        let gate = Gate::new(self.draw_ctx.viewport_to_world(pos));
+                        let gate = Gate::new();
                         self.session.add_device(Box::new(gate), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Note").clicked() {
-                        let note = Note::new(
-                            self.draw_ctx.viewport_to_world(pos),
-                            self.midi_config.get_event_sender(),
-                        );
+                        let note = Note::new(self.midi_config.get_event_sender());
                         self.session.add_device(Box::new(note), world_pos);
                         self.context_menu = None;
                     }

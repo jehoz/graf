@@ -6,7 +6,7 @@ use crate::{
     widgets::note_picker::NotePicker,
 };
 
-use super::{Arity, Device, NOTE_RADIUS};
+use super::{Arity, Device};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum PitchClass {
@@ -45,8 +45,6 @@ impl ToString for PitchClass {
 
 #[derive(Clone)]
 pub struct Note {
-    position: Vec2,
-
     midi_channel: u8,
     octave: u8,
     pitch_class: PitchClass,
@@ -58,10 +56,8 @@ pub struct Note {
 }
 
 impl Note {
-    pub fn new(position: Vec2, event_sender: MidiEventSender) -> Self {
+    pub fn new(event_sender: MidiEventSender) -> Self {
         Note {
-            position,
-
             midi_channel: 0,
             octave: 4,
             pitch_class: PitchClass::C,
@@ -119,23 +115,6 @@ impl Drop for Note {
 }
 
 impl Device for Note {
-    fn get_position(&self) -> Vec2 {
-        self.position
-    }
-
-    fn set_position(&mut self, pos: Vec2) {
-        self.position = pos;
-    }
-
-    fn closest_border_point(&self, point: Vec2, padding: f32) -> Vec2 {
-        let delta = point - self.position;
-        self.position + delta.normalize() * (NOTE_RADIUS + padding)
-    }
-
-    fn is_point_inside(&self, pt: Vec2) -> bool {
-        self.position.distance(pt) <= NOTE_RADIUS
-    }
-
     fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         if ctx.is_paused {
             self.turn_off();

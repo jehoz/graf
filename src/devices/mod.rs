@@ -9,12 +9,6 @@ pub mod latch;
 pub mod note;
 pub mod trigger;
 
-const CLOCK_RADIUS: f32 = 12.0;
-const GATE_WIDTH: f32 = 24.0;
-const NOTE_RADIUS: f32 = 12.0;
-const TRIGGER_RADIUS: f32 = 12.0;
-const LATCH_RADIUS: f32 = 12.0;
-
 #[derive(PartialEq)]
 pub enum Arity {
     Nullary,
@@ -26,11 +20,6 @@ pub trait Device {
     fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool>;
     fn draw(&self, ctx: &DrawContext, position: Vec2, size: f32, is_selected: bool);
     fn reset(&mut self) {}
-
-    fn get_position(&self) -> Vec2;
-    fn set_position(&mut self, pos: Vec2);
-    fn closest_border_point(&self, point: Vec2, padding: f32) -> Vec2;
-    fn is_point_inside(&self, pt: Vec2) -> bool;
 
     fn inspector(&mut self, ui: &mut Ui);
 
