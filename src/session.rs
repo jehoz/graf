@@ -75,11 +75,11 @@ impl From<Vec2> for DevicePosition {
 }
 
 pub struct Session {
-    pub devices: HashMap<DeviceId, (DevicePosition, Box<dyn Device>)>,
+    devices: HashMap<DeviceId, (DevicePosition, Box<dyn Device>)>,
     pub circuit: Dag,
 
     pub selected: Vec<DeviceId>,
-    pub clipboard: (
+    clipboard: (
         HashMap<DeviceId, (DevicePosition, Box<dyn Device>)>,
         Vec<Wire>,
     ),
@@ -182,18 +182,6 @@ impl Session {
 
     pub fn device_position(&self, id: DeviceId) -> Option<Vec2> {
         self.devices.get(&id).map(|(p, _)| p.snapped)
-    }
-
-    pub fn move_device(&mut self, device_id: DeviceId, delta: Vec2) {
-        if let Some((position, _)) = self.devices.get_mut(&device_id) {
-            position.modify(delta);
-        }
-    }
-
-    pub fn snap_device_position(&mut self, device_id: DeviceId) {
-        if let Some((position, _)) = self.devices.get_mut(&device_id) {
-            position.snap();
-        }
     }
 
     pub fn clear_selection(&mut self) {

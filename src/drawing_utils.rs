@@ -30,22 +30,6 @@ pub fn draw_line_v(from: Vec2, to: Vec2, thickness: f32, color: Color) {
     draw_line(from.x, from.y, to.x, to.y, thickness, color)
 }
 
-pub fn draw_dashed_line(from: Vec2, to: Vec2, color: Color, dash_size: f32) {
-    let length = (to - from).length();
-    let num_segments = (length / dash_size).ceil() as i32;
-    let dx = (to - from).x / num_segments as f32;
-    let dy = (to - from).y / num_segments as f32;
-    let mut prev_x = from.x;
-    let mut prev_y = from.y;
-    for _ in 0..num_segments {
-        let x = prev_x + dx / 2.0;
-        let y = prev_y + dy / 2.0;
-        draw_line(prev_x, prev_y, x, y, 1.0, color);
-        prev_x += dx;
-        prev_y += dy;
-    }
-}
-
 pub fn draw_arrow(
     from: Vec2,
     to: Vec2,
