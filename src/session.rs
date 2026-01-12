@@ -170,6 +170,10 @@ impl Session {
     }
 
     pub fn can_connect(&self, from: DeviceId, to: DeviceId) -> bool {
+        if !self.devices.contains_key(&from) || !self.devices.contains_key(&to) || from == to {
+            return false;
+        }
+
         let (_, to_dev) = self.devices.get(&to).unwrap();
         if to_dev.input_arity() == Arity::Nullary {
             return false;
