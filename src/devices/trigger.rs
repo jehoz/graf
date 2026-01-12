@@ -34,7 +34,7 @@ impl Trigger {
     pub fn new() -> Self {
         Trigger {
             duration: 500.0,
-            bpm_sync: false,
+            bpm_sync: true,
             bpm_duration: (1, 4),
             retrigger_mode: false,
 
