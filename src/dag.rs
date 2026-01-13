@@ -1,18 +1,19 @@
+use serde::Serialize;
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
 };
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Serialize)]
 pub struct DeviceId(u32);
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Serialize)]
 pub enum WireType {
     Normal,
     Negated,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Serialize)]
 pub struct Wire {
     pub from: DeviceId,
     pub to: DeviceId,
@@ -21,6 +22,7 @@ pub struct Wire {
 
 pub struct IllegalWireError;
 
+#[derive(Serialize)]
 pub struct Dag {
     id_counter: u32,
     wires: Vec<Wire>,
