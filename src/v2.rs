@@ -20,6 +20,27 @@ impl V2 {
         Self { x, y }
     }
 
+    pub fn floor(self) -> Self {
+        Self {
+            x: self.x.floor(),
+            y: self.y.floor(),
+        }
+    }
+
+    pub fn ceil(self) -> Self {
+        Self {
+            x: self.x.ceil(),
+            y: self.y.ceil(),
+        }
+    }
+
+    pub fn round(self) -> Self {
+        Self {
+            x: self.x.round(),
+            y: self.x.round(),
+        }
+    }
+
     pub fn length(self) -> f32 {
         self.length_sq().sqrt()
     }
