@@ -9,6 +9,7 @@ mod devices;
 mod drawing_utils;
 mod midi;
 mod session;
+mod v2;
 mod widgets;
 
 fn window_conf() -> Conf {
