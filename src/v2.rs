@@ -1,3 +1,5 @@
+use core::ops::*;
+
 use macroquad::math::Vec2;
 use serde::Serialize;
 
@@ -6,6 +8,25 @@ use serde::Serialize;
 pub struct V2 {
     pub x: f32,
     pub y: f32,
+}
+
+impl V2 {
+    pub const ZERO: Self = V2::new(0.0, 0.0);
+    pub const ONE: Self = V2::new(1.0, 1.0);
+    pub const NEG_ONE: Self = V2::new(-1.0, -1.0);
+    pub const MIN: Self = V2::new(f32::MIN, f32::MIN);
+
+    pub const fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
+
+    pub fn length(self) -> f32 {
+        self.length_sq().sqrt()
+    }
+
+    pub fn length_sq(self) -> f32 {
+        self.x * self.x + self.y * self.y
+    }
 }
 
 impl From<Vec2> for V2 {
@@ -23,5 +44,83 @@ impl Into<Vec2> for V2 {
             x: self.x,
             y: self.y,
         }
+    }
+}
+
+impl Default for V2 {
+    fn default() -> Self {
+        Self::ZERO
+    }
+}
+
+impl Add<V2> for V2 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl AddAssign<V2> for V2 {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
+impl Sub<V2> for V2 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl SubAssign<V2> for V2 {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+    }
+}
+
+impl Div<f32> for V2 {
+    type Output = Self;
+
+    fn div(self, rhs: f32) -> Self {
+        Self {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}
+
+impl DivAssign<f32> for V2 {
+    fn div_assign(&mut self, rhs: f32) {
+        self.x.div_assign(rhs);
+        self.y.div_assign(rhs);
+    }
+}
+
+impl Mul<f32> for V2 {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self {
+        Self {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
+impl MulAssign<f32> for V2 {
+    fn mul_assign(&mut self, rhs: f32) {
+        self.x.mul_assign(rhs);
+        self.y.mul_assign(rhs);
     }
 }
