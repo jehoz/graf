@@ -5,6 +5,7 @@ use std::{
 };
 
 use macroquad::math::{Rect, Vec2};
+use serde::Serialize;
 
 use crate::{
     app::DrawContext,
@@ -40,6 +41,31 @@ impl UpdateContext {
 }
 
 const SNAP_GRID_SIZE: f32 = 16.0;
+
+// custom 2D vector type that is serializable and implicitly convertible to and from Vec2
+#[derive(PartialEq, Copy, Clone, Serialize)]
+struct V2 {
+    x: f32,
+    y: f32,
+}
+
+impl From<Vec2> for V2 {
+    fn from(vec2: Vec2) -> V2 {
+        V2 {
+            x: vec2.x,
+            y: vec2.y,
+        }
+    }
+}
+
+impl Into<Vec2> for V2 {
+    fn into(self) -> Vec2 {
+        Vec2 {
+            x: self.x,
+            y: self.y,
+        }
+    }
+}
 
 // perhaps not the most elegant solution but it was the least bad way I could think of...
 #[derive(Clone, Copy)]
