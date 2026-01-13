@@ -53,4 +53,13 @@ impl Rect {
             && point.y >= self.top()
             && point.y < self.bottom()
     }
+
+    pub fn offset(self, offset: V2) -> Self {
+        Rect {
+            x: self.x + offset.x,
+            y: self.y + offset.y,
+            w: self.w,
+            h: self.h,
+        }
+    }
 }

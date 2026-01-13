@@ -45,6 +45,13 @@ impl V2 {
         self.x * rhs.x + self.y * rhs.y
     }
 
+    pub fn abs(self) -> Self {
+        Self {
+            x: self.x.abs(),
+            y: self.y.abs(),
+        }
+    }
+
     pub fn length(self) -> f32 {
         self.length_squared().sqrt()
     }
@@ -59,6 +66,18 @@ impl V2 {
 
     pub fn distance_squared(self, rhs: Self) -> f32 {
         (self - rhs).length_squared()
+    }
+
+    pub fn normalize(self) -> Self {
+        self * self.length().recip()
+    }
+
+    pub fn from_array(a: [f32; 2]) -> Self {
+        Self::new(a[0], a[1])
+    }
+
+    pub fn to_array(&self) -> [f32; 2] {
+        [self.x, self.y]
     }
 }
 
@@ -158,6 +177,17 @@ impl Mul<f32> for V2 {
         Self {
             x: self.x * rhs,
             y: self.y * rhs,
+        }
+    }
+}
+
+impl Mul<V2> for f32 {
+    type Output = V2;
+
+    fn mul(self, rhs: V2) -> V2 {
+        V2 {
+            x: rhs.x * self,
+            y: rhs.y * self,
         }
     }
 }
