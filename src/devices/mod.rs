@@ -1,7 +1,6 @@
 use egui::Ui;
-use macroquad::prelude::Vec2;
 
-use crate::{app::DrawContext, session::UpdateContext};
+use crate::{app::DrawContext, math::V2, session::UpdateContext};
 
 pub mod clock;
 pub mod gate;
@@ -18,7 +17,7 @@ pub enum Arity {
 
 pub trait Device {
     fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool>;
-    fn draw(&self, ctx: &DrawContext, position: Vec2, size: f32, is_selected: bool);
+    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool);
     fn reset(&mut self) {}
 
     fn inspector(&mut self, ui: &mut Ui);

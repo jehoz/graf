@@ -1,10 +1,8 @@
 use egui::{DragValue, FontId, RichText, Slider};
-use macroquad::{
-    math::Vec2,
-    shapes::{draw_arc, draw_circle, draw_circle_lines},
-};
+use macroquad::math::Vec2;
+use macroquad::shapes::{draw_arc, draw_circle, draw_circle_lines};
 
-use crate::{app::DrawContext, session::UpdateContext};
+use crate::{app::DrawContext, math::V2, session::UpdateContext};
 
 use super::{Arity, Device};
 
@@ -60,9 +58,9 @@ impl Device for Clock {
         }
     }
 
-    fn draw(&self, ctx: &DrawContext, position: Vec2, size: f32, is_selected: bool) {
+    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
         let radius = size / 2.0;
-        let Vec2 { x, y } = position;
+        let Vec2 { x, y } = position.into();
 
         if is_selected {
             draw_circle_lines(x, y, radius + 4.0, 1.0, ctx.colors.fg_0.with_alpha(0.5));

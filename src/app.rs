@@ -6,7 +6,6 @@ use macroquad::{
         is_key_down, is_key_pressed, is_mouse_button_pressed, is_mouse_button_released,
         mouse_position, KeyCode, MouseButton,
     },
-    math::{vec2, Rect, Vec2},
     shapes::draw_rectangle_lines,
     window::clear_background,
 };
@@ -17,25 +16,26 @@ use crate::{
     drawing_utils::{
         color_to_color32, draw_wire_between_devices, draw_wire_from_device, ColorPalette,
     },
+    math::{Rect, V2},
     midi::MidiConfig,
     session::Session,
 };
 
 enum CursorState {
     Idle,
-    DraggingSelectedDevices(Vec2),
+    DraggingSelectedDevices(V2),
     DraggingLooseWire(DeviceId, WireType),
     DraggingConnectedWire(DeviceId, DeviceId, WireType),
     DraggingInvalidWire(DeviceId, WireType),
-    DraggingSelectBox(Vec2),
-    PanningViewport(Vec2),
+    DraggingSelectBox(V2),
+    PanningViewport(V2),
 }
 
 const INSPECTOR_WIDTH: f32 = 200.0;
 
 pub struct DrawContext {
     pub colors: ColorPalette,
-    pub viewport_offset: Vec2,
+    pub viewport_offset: V2,
     pub egui_visuals: Visuals,
 }
 
@@ -106,16 +106,16 @@ impl DrawContext {
 
         DrawContext {
             colors,
-            viewport_offset: Vec2::ZERO,
+            viewport_offset: V2::ZERO,
             egui_visuals: visuals,
         }
     }
 
-    pub fn world_to_viewport(&self, world_coords: Vec2) -> Vec2 {
+    pub fn world_to_viewport(&self, world_coords: V2) -> V2 {
         world_coords + self.viewport_offset
     }
 
-    pub fn viewport_to_world(&self, viewport_coords: Vec2) -> Vec2 {
+    pub fn viewport_to_world(&self, viewport_coords: V2) -> V2 {
         viewport_coords - self.viewport_offset
     }
 }
@@ -125,7 +125,7 @@ pub struct App {
     cursor: CursorState,
     draw_ctx: DrawContext,
 
-    context_menu: Option<Vec2>,
+    context_menu: Option<V2>,
 
     midi_config: MidiConfig,
 }
@@ -143,7 +143,7 @@ impl App {
 
     pub fn handle_inputs(&mut self) {
         let (mx, my) = mouse_position();
-        let m_pos = vec2(mx, my);
+        let m_pos = V2::new(mx, my);
         let device_under_mouse = self
             .session
             .get_device_at(self.draw_ctx.viewport_to_world(m_pos));
@@ -415,7 +415,7 @@ impl App {
 
     pub fn draw(&self) {
         let (mx, my) = mouse_position();
-        let m_pos = vec2(mx, my);
+        let m_pos = V2::new(mx, my);
 
         clear_background(self.draw_ctx.colors.bg_0);
 

@@ -11,6 +11,7 @@ use crate::session::UpdateContext;
 use crate::{
     app::DrawContext,
     devices::{Arity, Device},
+    math::V2,
 };
 
 #[derive(Clone)]
@@ -98,8 +99,8 @@ impl Device for Trigger {
         }
     }
 
-    fn draw(&self, ctx: &DrawContext, position: Vec2, size: f32, is_selected: bool) {
-        let Vec2 { x, y } = position;
+    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+        let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
         if is_selected {

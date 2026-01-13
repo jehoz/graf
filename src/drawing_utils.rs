@@ -1,11 +1,11 @@
 use egui::Color32;
 use macroquad::{
     color::Color,
-    math::{vec2, Vec2},
+    math::vec2,
     shapes::{draw_line, draw_poly},
 };
 
-use crate::{app::DrawContext, dag::WireType};
+use crate::{app::DrawContext, dag::WireType, math::V2};
 
 pub const DEVICE_WIDTH: f32 = 24.0;
 
@@ -26,19 +26,21 @@ pub fn color_to_color32(c: Color) -> Color32 {
     Color32::from_rgb(r, g, b)
 }
 
-pub fn draw_line_v(from: Vec2, to: Vec2, thickness: f32, color: Color) {
+pub fn draw_line_v(from: V2, to: V2, thickness: f32, color: Color) {
     draw_line(from.x, from.y, to.x, to.y, thickness, color)
 }
 
 pub fn draw_arrow(
-    from: Vec2,
-    to: Vec2,
+    from: V2,
+    to: V2,
     thickness: f32,
     head_size: f32,
     fill: Color,
     outline: Option<Color>,
 ) {
-    let rotation = vec2(1.0, 0.0).angle_between(to - from).to_degrees();
+    let rotation = vec2(1.0, 0.0)
+        .angle_between((to - from).into())
+        .to_degrees();
     let arrow_pos = to - (to - from).normalize() * head_size;
 
     if let Some(color) = outline {
@@ -57,7 +59,7 @@ pub fn draw_arrow(
     draw_poly(arrow_pos.x, arrow_pos.y, 3, head_size, rotation, fill);
 }
 
-pub fn draw_wire(from: Vec2, to: Vec2, wire_type: WireType, color: Color) {
+pub fn draw_wire(from: V2, to: V2, wire_type: WireType, color: Color) {
     match wire_type {
         WireType::Normal => draw_arrow(from, to, 1.5, 6.0, color, None),
         WireType::Negated => draw_arrow(from, to, 1.5, 5.0, macroquad::color::BLACK, Some(color)),
@@ -65,15 +67,15 @@ pub fn draw_wire(from: Vec2, to: Vec2, wire_type: WireType, color: Color) {
 }
 
 // computes the point on a given circle's perimeter that is closest to another point
-pub fn closest_point_on_circle(center: Vec2, radius: f32, point: Vec2) -> Vec2 {
+pub fn closest_point_on_circle(center: V2, radius: f32, point: V2) -> V2 {
     let delta = point - center;
     center + delta.normalize() * radius
 }
 
 pub fn draw_wire_from_device(
     draw_ctx: &DrawContext,
-    device_position: Vec2,
-    to: Vec2,
+    device_position: V2,
+    to: V2,
     wire_type: WireType,
     color: Color,
 ) {
@@ -87,8 +89,8 @@ pub fn draw_wire_from_device(
 
 pub fn draw_wire_between_devices(
     draw_ctx: &DrawContext,
-    from_device: Vec2,
-    to_device: Vec2,
+    from_device: V2,
+    to_device: V2,
     wire_type: WireType,
     color: Color,
 ) {

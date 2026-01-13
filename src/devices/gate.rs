@@ -5,6 +5,7 @@ use macroquad::{
 };
 
 use crate::app::DrawContext;
+use crate::math::V2;
 use crate::session::UpdateContext;
 
 use super::{Arity, Device};
@@ -45,8 +46,8 @@ impl Device for Gate {
         Some(out)
     }
 
-    fn draw(&self, ctx: &DrawContext, position: Vec2, size: f32, is_selected: bool) {
-        let Vec2 { x, y } = position;
+    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+        let Vec2 { x, y } = position.into();
 
         if is_selected {
             draw_rectangle_lines(

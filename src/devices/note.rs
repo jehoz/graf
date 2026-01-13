@@ -2,7 +2,7 @@ use egui::{DragValue, FontId, RichText};
 use macroquad::{math::Vec2, shapes::draw_hexagon};
 
 use crate::{
-    app::DrawContext, midi::MidiEventSender, session::UpdateContext,
+    app::DrawContext, math::V2, midi::MidiEventSender, session::UpdateContext,
     widgets::note_picker::NotePicker,
 };
 
@@ -133,8 +133,8 @@ impl Device for Note {
         None
     }
 
-    fn draw(&self, ctx: &DrawContext, position: Vec2, size: f32, is_selected: bool) {
-        let Vec2 { x, y } = position;
+    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+        let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
         if is_selected {

@@ -4,7 +4,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use macroquad::math::{Rect, Vec2};
 use serde::Serialize;
 
 use crate::{
@@ -12,7 +11,7 @@ use crate::{
     dag::{self, Dag, DeviceId, Wire, WireType},
     devices::{Arity, Device},
     drawing_utils::{draw_wire_between_devices, DEVICE_WIDTH},
-    v2::V2,
+    math::{Rect, V2},
 };
 
 pub struct UpdateContext {
@@ -44,21 +43,21 @@ impl UpdateContext {
 const SNAP_GRID_SIZE: f32 = 16.0;
 
 // perhaps not the most elegant solution but it was the least bad way I could think of...
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
 struct DevicePosition {
-    raw: Vec2,
-    snapped: Vec2,
+    raw: V2,
+    snapped: V2,
 }
 
 impl DevicePosition {
     pub fn new() -> Self {
         DevicePosition {
-            raw: Vec2::ZERO,
-            snapped: Vec2::ZERO,
+            raw: V2::ZERO,
+            snapped: V2::ZERO,
         }
     }
 
-    pub fn modify(&mut self, delta: Vec2) {
+    pub fn modify(&mut self, delta: V2) {
         self.raw += delta;
         self.snapped = (self.raw / SNAP_GRID_SIZE).round() * SNAP_GRID_SIZE;
     }
@@ -68,8 +67,8 @@ impl DevicePosition {
     }
 }
 
-impl From<Vec2> for DevicePosition {
-    fn from(value: Vec2) -> Self {
+impl From<V2> for DevicePosition {
+    fn from(value: V2) -> Self {
         let mut p = DevicePosition::new();
         p.modify(value);
         p
@@ -102,7 +101,7 @@ impl Session {
         }
     }
 
-    pub fn add_device(&mut self, device: Box<dyn Device>, position: Vec2) -> DeviceId {
+    pub fn add_device(&mut self, device: Box<dyn Device>, position: V2) -> DeviceId {
         let id = self.circuit.add_device();
         let pos = DevicePosition::from(position);
         self.devices.insert(id, (pos, device));
@@ -128,7 +127,7 @@ impl Session {
         self.devices.get_mut(&device_id).map(|(_, dev)| dev)
     }
 
-    pub fn get_device_at(&self, position: Vec2) -> Option<DeviceId> {
+    pub fn get_device_at(&self, position: V2) -> Option<DeviceId> {
         // if inside multiple devices' bounding boxes, get closest one
         let mut min_dist = f32::INFINITY;
         let mut closest = None;
@@ -147,7 +146,7 @@ impl Session {
         closest
     }
 
-    pub fn get_wire_at(&self, position: Vec2) -> Option<Wire> {
+    pub fn get_wire_at(&self, position: V2) -> Option<Wire> {
         const WIRE_CLICKABLE_DISTANCE: f32 = 5.0;
 
         for edge in self.circuit.wires() {
@@ -186,7 +185,7 @@ impl Session {
         !self.circuit.is_reachable(to, from)
     }
 
-    pub fn device_position(&self, id: DeviceId) -> Option<Vec2> {
+    pub fn device_position(&self, id: DeviceId) -> Option<V2> {
         self.devices.get(&id).map(|(p, _)| p.snapped)
     }
 
@@ -208,7 +207,7 @@ impl Session {
         }
     }
 
-    pub fn move_selected_devices(&mut self, delta: Vec2) {
+    pub fn move_selected_devices(&mut self, delta: V2) {
         for dev_id in self.selected.iter() {
             self.devices.get_mut(dev_id).map(|(p, _)| p.modify(delta));
         }
@@ -231,7 +230,7 @@ impl Session {
 
     pub fn copy_selected_devices(&mut self) {
         let mut devices = HashMap::new();
-        let mut top_left = Vec2::new(f32::INFINITY, f32::INFINITY);
+        let mut top_left = V2::new(f32::INFINITY, f32::INFINITY);
         for dev_id in &self.selected {
             if let Some((pos, device)) = self.devices.get(&dev_id) {
                 if pos.snapped.x < top_left.x {
@@ -259,7 +258,7 @@ impl Session {
         self.clipboard = (devices, edges);
     }
 
-    pub fn paste_clipboard(&mut self, position: Vec2) {
+    pub fn paste_clipboard(&mut self, position: V2) {
         let (devices, edges) = &self.clipboard;
 
         let mut new_devices = HashMap::new();
