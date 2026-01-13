@@ -7,9 +7,9 @@ mod app;
 mod dag;
 mod devices;
 mod drawing_utils;
+mod math;
 mod midi;
 mod session;
-mod v2;
 mod widgets;
 
 fn window_conf() -> Conf {
