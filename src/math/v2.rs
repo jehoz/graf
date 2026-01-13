@@ -41,12 +41,24 @@ impl V2 {
         }
     }
 
-    pub fn length(self) -> f32 {
-        self.length_sq().sqrt()
+    pub fn dot(self, rhs: Self) -> f32 {
+        self.x * rhs.x + self.y * rhs.y
     }
 
-    pub fn length_sq(self) -> f32 {
-        self.x * self.x + self.y * self.y
+    pub fn length(self) -> f32 {
+        self.length_squared().sqrt()
+    }
+
+    pub fn length_squared(self) -> f32 {
+        self.dot(self)
+    }
+
+    pub fn distance(self, rhs: Self) -> f32 {
+        (self - rhs).length()
+    }
+
+    pub fn distance_squared(self, rhs: Self) -> f32 {
+        (self - rhs).length_squared()
     }
 }
 
@@ -71,6 +83,17 @@ impl Into<Vec2> for V2 {
 impl Default for V2 {
     fn default() -> Self {
         Self::ZERO
+    }
+}
+
+impl Neg for V2 {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+        }
     }
 }
 
