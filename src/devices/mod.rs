@@ -20,22 +20,7 @@ pub enum Arity {
     Unary,
     NAry,
 }
-
-pub trait Device {
-    fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool>;
-    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool);
-    fn reset(&mut self) {}
-
-    fn inspector(&mut self, ui: &mut Ui);
-
-    // number of input wires that can be plugged into the device
-    fn input_arity(&self) -> Arity;
-
-    // can there be wires coming out of this device?
-    fn has_output(&self) -> bool;
-}
-
-pub enum AnyDevice {
+pub enum Device {
     Clock(Clock),
     Gate(Gate),
     Latch(Latch),
@@ -43,61 +28,61 @@ pub enum AnyDevice {
     Trigger(Trigger),
 }
 
-impl Device for AnyDevice {
+impl Device {
     fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         match self {
-            AnyDevice::Clock(ref mut d) => d.update(ctx, inputs),
-            AnyDevice::Gate(ref mut d) => d.update(ctx, inputs),
-            AnyDevice::Latch(ref mut d) => d.update(ctx, inputs),
-            AnyDevice::Note(ref mut d) => d.update(ctx, inputs),
-            AnyDevice::Trigger(ref mut d) => d.update(ctx, inputs),
+            Device::Clock(ref mut d) => d.update(ctx, inputs),
+            Device::Gate(ref mut d) => d.update(ctx, inputs),
+            Device::Latch(ref mut d) => d.update(ctx, inputs),
+            Device::Note(ref mut d) => d.update(ctx, inputs),
+            Device::Trigger(ref mut d) => d.update(ctx, inputs),
         }
     }
 
     fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
         match self {
-            AnyDevice::Clock(d) => d.draw(ctx, position, size, is_selected),
-            AnyDevice::Gate(d) => d.draw(ctx, position, size, is_selected),
-            AnyDevice::Latch(d) => d.draw(ctx, position, size, is_selected),
-            AnyDevice::Note(d) => d.draw(ctx, position, size, is_selected),
-            AnyDevice::Trigger(d) => d.draw(ctx, position, size, is_selected),
+            Device::Clock(d) => d.draw(ctx, position, size, is_selected),
+            Device::Gate(d) => d.draw(ctx, position, size, is_selected),
+            Device::Latch(d) => d.draw(ctx, position, size, is_selected),
+            Device::Note(d) => d.draw(ctx, position, size, is_selected),
+            Device::Trigger(d) => d.draw(ctx, position, size, is_selected),
         }
     }
 
     fn reset(&mut self) {
         match self {
-            AnyDevice::Clock(ref mut d) => d.reset(),
-            AnyDevice::Gate(ref mut d) => d.reset(),
-            AnyDevice::Latch(ref mut d) => d.reset(),
-            AnyDevice::Note(ref mut d) => d.reset(),
-            AnyDevice::Trigger(ref mut d) => d.reset(),
+            Device::Clock(ref mut d) => d.reset(),
+            Device::Gate(ref mut d) => d.reset(),
+            Device::Latch(ref mut d) => d.reset(),
+            Device::Note(ref mut d) => d.reset(),
+            Device::Trigger(ref mut d) => d.reset(),
         }
     }
 
     fn inspector(&mut self, ui: &mut Ui) {
         match self {
-            AnyDevice::Clock(ref mut d) => d.inspector(ui),
-            AnyDevice::Gate(ref mut d) => d.inspector(ui),
-            AnyDevice::Latch(ref mut d) => d.inspector(ui),
-            AnyDevice::Note(ref mut d) => d.inspector(ui),
-            AnyDevice::Trigger(ref mut d) => d.inspector(ui),
+            Device::Clock(ref mut d) => d.inspector(ui),
+            Device::Gate(ref mut d) => d.inspector(ui),
+            Device::Latch(ref mut d) => d.inspector(ui),
+            Device::Note(ref mut d) => d.inspector(ui),
+            Device::Trigger(ref mut d) => d.inspector(ui),
         }
     }
 
     // number of input wires that can be plugged into the device
     fn input_arity(&self) -> Arity {
         match self {
-            AnyDevice::Clock(_) => Arity::Nullary,
-            AnyDevice::Gate(_) => Arity::NAry,
-            AnyDevice::Latch(_) => Arity::Unary,
-            AnyDevice::Note(_) => Arity::Unary,
-            AnyDevice::Trigger(_) => Arity::Unary,
+            Device::Clock(_) => Arity::Nullary,
+            Device::Gate(_) => Arity::NAry,
+            Device::Latch(_) => Arity::Unary,
+            Device::Note(_) => Arity::Unary,
+            Device::Trigger(_) => Arity::Unary,
         }
     }
 
     // can there be wires coming out of this device?
     fn has_output(&self) -> bool {
-        if let AnyDevice::Note(_) = self {
+        if let Device::Note(_) = self {
             false
         } else {
             true
