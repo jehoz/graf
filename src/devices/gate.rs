@@ -8,8 +8,6 @@ use crate::app::DrawContext;
 use crate::math::V2;
 use crate::session::UpdateContext;
 
-use super::{Arity, Device};
-
 #[derive(Clone, PartialEq)]
 pub enum BooleanOperation {
     AND,
@@ -31,10 +29,8 @@ impl Gate {
             operation: BooleanOperation::AND,
         }
     }
-}
 
-impl Device for Gate {
-    fn update(&mut self, _ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
+    pub fn update(&mut self, _ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         let out = match self.operation {
             BooleanOperation::AND => inputs.iter().fold(true, |acc, x| acc && *x),
             BooleanOperation::OR => inputs.iter().fold(false, |acc, x| acc || *x),
@@ -46,7 +42,7 @@ impl Device for Gate {
         Some(out)
     }
 
-    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
         let Vec2 { x, y } = position.into();
 
         if is_selected {
@@ -73,7 +69,7 @@ impl Device for Gate {
         draw_symbol(ctx, x, y, size * 0.5, &self.operation);
     }
 
-    fn inspector(&mut self, ui: &mut egui::Ui) {
+    pub fn inspector(&mut self, ui: &mut egui::Ui) {
         ui.label(
             RichText::new("Gate")
                 .font(FontId::proportional(16.0))
@@ -118,18 +114,6 @@ impl Device for Gate {
                 });
                 ui.end_row();
             });
-    }
-
-    fn input_arity(&self) -> Arity {
-        Arity::NAry
-    }
-
-    fn has_output(&self) -> bool {
-        true
-    }
-
-    fn clone_dyn(&self) -> Box<dyn Device> {
-        Box::new(self.clone())
     }
 }
 

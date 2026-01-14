@@ -8,11 +8,7 @@ use macroquad::{
 use egui::{DragValue, FontId, RichText, Slider};
 
 use crate::session::UpdateContext;
-use crate::{
-    app::DrawContext,
-    devices::{Arity, Device},
-    math::V2,
-};
+use crate::{app::DrawContext, math::V2};
 
 #[derive(Clone)]
 pub struct Trigger {
@@ -59,10 +55,8 @@ impl Trigger {
         self.ready_to_fire = false;
         self.time_remaining = Some(duration);
     }
-}
 
-impl Device for Trigger {
-    fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
+    pub fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         let input_on = inputs.first().map(|x| *x).unwrap_or(false);
         if self.retrigger_mode {
             if input_on && self.ready_to_fire {
@@ -99,7 +93,7 @@ impl Device for Trigger {
         }
     }
 
-    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
         let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
@@ -124,14 +118,14 @@ impl Device for Trigger {
         }
     }
 
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.ready_to_fire = true;
         self.time_remaining = None;
 
         self.prev_clock_time = Duration::ZERO;
     }
 
-    fn inspector(&mut self, ui: &mut egui::Ui) {
+    pub fn inspector(&mut self, ui: &mut egui::Ui) {
         ui.label(
             RichText::new("Trigger")
                 .font(FontId::proportional(16.0))
@@ -157,17 +151,5 @@ impl Device for Trigger {
                     .suffix("ms"),
             );
         }
-    }
-
-    fn input_arity(&self) -> super::Arity {
-        Arity::Unary
-    }
-
-    fn has_output(&self) -> bool {
-        true
-    }
-
-    fn clone_dyn(&self) -> Box<dyn Device> {
-        Box::new(self.clone())
     }
 }

@@ -6,8 +6,6 @@ use crate::{
     widgets::note_picker::NotePicker,
 };
 
-use super::{Arity, Device};
-
 #[derive(Clone, Copy, PartialEq)]
 pub enum PitchClass {
     C,
@@ -106,16 +104,8 @@ impl Note {
 
         self.is_on = false;
     }
-}
 
-impl Drop for Note {
-    fn drop(&mut self) {
-        self.turn_off();
-    }
-}
-
-impl Device for Note {
-    fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
+    pub fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         if ctx.is_paused {
             self.turn_off();
             return None;
@@ -133,7 +123,7 @@ impl Device for Note {
         None
     }
 
-    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
         let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
@@ -164,11 +154,11 @@ impl Device for Note {
         }
     }
 
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.turn_off();
     }
 
-    fn inspector(&mut self, ui: &mut egui::Ui) {
+    pub fn inspector(&mut self, ui: &mut egui::Ui) {
         let mut octave = self.octave;
         let mut pitch = self.pitch_class;
 
@@ -215,16 +205,10 @@ impl Device for Note {
             ui.add(DragValue::new(&mut self.midi_channel).range(0..=15));
         });
     }
+}
 
-    fn input_arity(&self) -> Arity {
-        Arity::Unary
-    }
-
-    fn has_output(&self) -> bool {
-        false
-    }
-
-    fn clone_dyn(&self) -> Box<dyn Device> {
-        Box::new(self.clone())
+impl Drop for Note {
+    fn drop(&mut self) {
+        self.turn_off();
     }
 }

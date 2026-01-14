@@ -4,8 +4,6 @@ use macroquad::shapes::{draw_arc, draw_circle, draw_circle_lines};
 
 use crate::{app::DrawContext, math::V2, session::UpdateContext};
 
-use super::{Arity, Device};
-
 #[derive(Clone)]
 pub struct Clock {
     // if true, the clock's cycle duration is a fraction of a note length
@@ -37,10 +35,8 @@ impl Clock {
             cycle_position: 0.0,
         }
     }
-}
 
-impl Device for Clock {
-    fn update(&mut self, ctx: &mut UpdateContext, _inputs: Vec<bool>) -> Option<bool> {
+    pub fn update(&mut self, ctx: &mut UpdateContext, _inputs: Vec<bool>) -> Option<bool> {
         if self.bpm_sync {
             let (numerator, denominator) = self.bpm_duration;
             let beat_period = (numerator as f32 / denominator as f32) * 4.0;
@@ -58,7 +54,7 @@ impl Device for Clock {
         }
     }
 
-    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
         let radius = size / 2.0;
         let Vec2 { x, y } = position.into();
 
@@ -81,7 +77,7 @@ impl Device for Clock {
         );
     }
 
-    fn inspector(&mut self, ui: &mut egui::Ui) {
+    pub fn inspector(&mut self, ui: &mut egui::Ui) {
         ui.label(
             RichText::new("Clock")
                 .font(FontId::proportional(16.0))
@@ -107,19 +103,7 @@ impl Device for Clock {
         ui.add(Slider::new(&mut self.offset, 0f32..=1.0f32).text("Offset"));
     }
 
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.cycle_position = 0.0;
-    }
-
-    fn input_arity(&self) -> Arity {
-        Arity::Nullary
-    }
-
-    fn has_output(&self) -> bool {
-        true
-    }
-
-    fn clone_dyn(&self) -> Box<dyn Device> {
-        Box::new(self.clone())
     }
 }
