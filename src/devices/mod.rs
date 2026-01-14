@@ -8,6 +8,12 @@ pub mod latch;
 pub mod note;
 pub mod trigger;
 
+pub use clock::Clock;
+pub use gate::Gate;
+pub use latch::Latch;
+pub use note::Note;
+pub use trigger::Trigger;
+
 #[derive(PartialEq)]
 pub enum Arity {
     Nullary,
@@ -30,4 +36,15 @@ pub trait Device {
 
     // need this so we can copy and paste devices in the session
     fn clone_dyn(&self) -> Box<dyn Device>;
+}
+
+/// Wrapper over all `Device` types for static dispatch (using `Box<dyn Device>` was causing some headaches).
+///
+/// A variant will need to be added for any new devices.
+pub enum AnyDevice {
+    Clock(Clock),
+    Gate(Gate),
+    Latch(Latch),
+    Note(Note),
+    Trigger(Trigger),
 }
