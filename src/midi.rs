@@ -1,6 +1,6 @@
 use core::cell::RefCell;
-use std::rc::Rc;
 use std::collections::VecDeque;
+use std::rc::Rc;
 
 use midir::{MidiOutput, MidiOutputConnection, MidiOutputPort};
 use midly::live::LiveEvent;
@@ -13,7 +13,7 @@ pub type MidiEvent = (u4, MidiMessage);
 
 #[derive(Clone)]
 pub struct MidiEventSender {
-    event_queue: Rc<RefCell<VecDeque<MidiEvent>>>
+    event_queue: Rc<RefCell<VecDeque<MidiEvent>>>,
 }
 
 impl MidiEventSender {
@@ -49,7 +49,8 @@ impl MidiConfig {
     pub fn refresh_ports(&mut self) {
         self.ports.clear();
         for port in self.midi_out.ports() {
-            self.ports.push((self.midi_out.port_name(&port).unwrap(), port, false));
+            self.ports
+                .push((self.midi_out.port_name(&port).unwrap(), port, false));
         }
     }
 
@@ -70,12 +71,15 @@ impl MidiConfig {
                 event.write(&mut buf).unwrap();
                 conn.send(&buf).unwrap();
             }
+        } else {
+            // dump any events in queue if there is no active connection
+            self.event_queue.borrow_mut().clear();
         }
     }
 
     pub fn get_event_sender(&self) -> MidiEventSender {
         MidiEventSender {
-            event_queue: self.event_queue.clone()
+            event_queue: self.event_queue.clone(),
         }
     }
 }
