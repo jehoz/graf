@@ -20,6 +20,8 @@ pub enum Arity {
     Unary,
     NAry,
 }
+
+#[derive(Clone)]
 pub enum Device {
     Clock(Clock),
     Gate(Gate),
@@ -29,7 +31,7 @@ pub enum Device {
 }
 
 impl Device {
-    fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
+    pub fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
         match self {
             Device::Clock(ref mut d) => d.update(ctx, inputs),
             Device::Gate(ref mut d) => d.update(ctx, inputs),
@@ -39,7 +41,7 @@ impl Device {
         }
     }
 
-    fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
         match self {
             Device::Clock(d) => d.draw(ctx, position, size, is_selected),
             Device::Gate(d) => d.draw(ctx, position, size, is_selected),
@@ -49,17 +51,17 @@ impl Device {
         }
     }
 
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         match self {
             Device::Clock(ref mut d) => d.reset(),
-            Device::Gate(ref mut d) => d.reset(),
+            Device::Gate(_) => {} // gates do not have any state that needs to be reset
             Device::Latch(ref mut d) => d.reset(),
             Device::Note(ref mut d) => d.reset(),
             Device::Trigger(ref mut d) => d.reset(),
         }
     }
 
-    fn inspector(&mut self, ui: &mut Ui) {
+    pub fn inspector(&mut self, ui: &mut Ui) {
         match self {
             Device::Clock(ref mut d) => d.inspector(ui),
             Device::Gate(ref mut d) => d.inspector(ui),
@@ -70,7 +72,7 @@ impl Device {
     }
 
     // number of input wires that can be plugged into the device
-    fn input_arity(&self) -> Arity {
+    pub fn input_arity(&self) -> Arity {
         match self {
             Device::Clock(_) => Arity::Nullary,
             Device::Gate(_) => Arity::NAry,
@@ -81,7 +83,7 @@ impl Device {
     }
 
     // can there be wires coming out of this device?
-    fn has_output(&self) -> bool {
+    pub fn has_output(&self) -> bool {
         if let Device::Note(_) = self {
             false
         } else {
