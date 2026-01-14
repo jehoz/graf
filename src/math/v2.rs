@@ -37,7 +37,7 @@ impl V2 {
     pub fn round(self) -> Self {
         Self {
             x: self.x.round(),
-            y: self.x.round(),
+            y: self.y.round(),
         }
     }
 
