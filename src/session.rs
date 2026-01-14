@@ -76,14 +76,11 @@ impl From<V2> for DevicePosition {
 }
 
 pub struct Session {
-    devices: HashMap<DeviceId, (DevicePosition, Box<dyn Device>)>,
+    devices: HashMap<DeviceId, (DevicePosition, Device)>,
     pub circuit: Dag,
 
     pub selected: Vec<DeviceId>,
-    clipboard: (
-        HashMap<DeviceId, (DevicePosition, Box<dyn Device>)>,
-        Vec<Wire>,
-    ),
+    clipboard: (HashMap<DeviceId, (DevicePosition, Device)>, Vec<Wire>),
 
     pub update_ctx: UpdateContext,
 }
@@ -101,7 +98,7 @@ impl Session {
         }
     }
 
-    pub fn add_device(&mut self, device: Box<dyn Device>, position: V2) -> DeviceId {
+    pub fn add_device(&mut self, device: Device, position: V2) -> DeviceId {
         let id = self.circuit.add_device();
         let pos = DevicePosition::from(position);
         self.devices.insert(id, (pos, device));
@@ -119,11 +116,11 @@ impl Session {
         self.circuit.remove_wire(from, to)
     }
 
-    pub fn get_device(&self, device_id: DeviceId) -> Option<&Box<dyn Device>> {
+    pub fn get_device(&self, device_id: DeviceId) -> Option<&Device> {
         self.devices.get(&device_id).map(|(_, dev)| dev)
     }
 
-    pub fn get_device_mut(&mut self, device_id: DeviceId) -> Option<&mut Box<dyn Device>> {
+    pub fn get_device_mut(&mut self, device_id: DeviceId) -> Option<&mut Device> {
         self.devices.get_mut(&device_id).map(|(_, dev)| dev)
     }
 
@@ -239,7 +236,7 @@ impl Session {
                 if pos.snapped.y < top_left.y {
                     top_left.y = pos.snapped.y;
                 }
-                devices.insert(*dev_id, (*pos, device.clone_dyn()));
+                devices.insert(*dev_id, (*pos, device.clone()));
             }
         }
 
@@ -263,7 +260,7 @@ impl Session {
 
         let mut new_devices = HashMap::new();
         for (id, (pos, device)) in devices.iter() {
-            new_devices.insert(*id, (pos.clone(), device.clone_dyn()));
+            new_devices.insert(*id, (pos.clone(), device.clone()));
         }
         let edges = edges.clone();
 

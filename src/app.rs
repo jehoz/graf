@@ -12,7 +12,7 @@ use macroquad::{
 
 use crate::{
     dag::{DeviceId, WireType},
-    devices::{clock::Clock, gate::Gate, latch::Latch, note::Note, trigger::Trigger},
+    devices::{clock::Clock, gate::Gate, latch::Latch, note::Note, trigger::Trigger, Device},
     drawing_utils::{
         color_to_color32, draw_wire_between_devices, draw_wire_from_device, ColorPalette,
     },
@@ -319,27 +319,27 @@ impl App {
                     let world_pos = self.draw_ctx.viewport_to_world(pos);
                     if ui.button("Clock").clicked() {
                         let clock = Clock::new();
-                        self.session.add_device(Box::new(clock), world_pos);
+                        self.session.add_device(Device::Clock(clock), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Trigger").clicked() {
                         let trigger = Trigger::new();
-                        self.session.add_device(Box::new(trigger), world_pos);
+                        self.session.add_device(Device::Trigger(trigger), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Latch").clicked() {
                         let latch = Latch::new();
-                        self.session.add_device(Box::new(latch), world_pos);
+                        self.session.add_device(Device::Latch(latch), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Gate").clicked() {
                         let gate = Gate::new();
-                        self.session.add_device(Box::new(gate), world_pos);
+                        self.session.add_device(Device::Gate(gate), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Note").clicked() {
                         let note = Note::new(self.midi_config.get_event_sender());
-                        self.session.add_device(Box::new(note), world_pos);
+                        self.session.add_device(Device::Note(note), world_pos);
                         self.context_menu = None;
                     }
                 });
