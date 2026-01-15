@@ -1,4 +1,5 @@
 use egui::Ui;
+use macroquad::prelude::Color;
 
 use crate::{
     app::{DrawContext, UpdateContext},
@@ -44,13 +45,13 @@ impl Device {
         }
     }
 
-    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, color: Color) {
         match self {
-            Device::Clock(d) => d.draw(ctx, position, size, is_selected),
-            Device::Gate(d) => d.draw(ctx, position, size, is_selected),
-            Device::Latch(d) => d.draw(ctx, position, size, is_selected),
-            Device::Note(d) => d.draw(ctx, position, size, is_selected),
-            Device::Trigger(d) => d.draw(ctx, position, size, is_selected),
+            Device::Clock(d) => d.draw(ctx, position, size, color),
+            Device::Gate(d) => d.draw(ctx, position, size, color),
+            Device::Latch(d) => d.draw(ctx, position, size, color),
+            Device::Note(d) => d.draw(ctx, position, size, color),
+            Device::Trigger(d) => d.draw(ctx, position, size, color),
         }
     }
 

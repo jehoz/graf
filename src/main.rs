@@ -34,6 +34,7 @@ async fn main() {
         bg_2: Color::from_hex(0x212121),
         bg_3: Color::from_hex(0x3C3C3C),
 
+        selected: Color::from_hex(0xA8B5FF),
         error: Color::from_hex(0xF21B1B),
     };
 

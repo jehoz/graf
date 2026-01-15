@@ -1,13 +1,14 @@
 use core::clone::Clone;
 use std::collections::HashMap;
 
+use macroquad::prelude::draw_circle;
 use serde::Serialize;
 
 use crate::{
     app::{DrawContext, UpdateContext},
     dag::{self, Dag, DeviceId, Wire, WireType},
     devices::{Arity, Device},
-    drawing_utils::{draw_wire_between_devices, DEVICE_WIDTH, SNAP_GRID_SIZE},
+    drawing_utils::{draw_line_v, draw_wire_between_devices, DEVICE_WIDTH, SNAP_GRID_SIZE},
     math::{Rect, V2},
 };
 
@@ -249,26 +250,38 @@ impl Circuit {
         }
     }
 
-    pub fn draw(&self, draw_ctx: &DrawContext) {
+    pub fn draw(&self, draw_ctx: &DrawContext, selected: &Vec<DeviceId>) {
         for wire in self.dag.wires() {
             let (from_pos, _) = self.devices.get(&wire.from).unwrap();
             let (to_pos, _) = self.devices.get(&wire.to).unwrap();
+
+            let color = if selected.contains(&wire.from) && selected.contains(&wire.to) {
+                draw_ctx.colors.selected
+            } else {
+                draw_ctx.colors.fg_1
+            };
+
             draw_wire_between_devices(
                 draw_ctx,
                 from_pos.snapped,
                 to_pos.snapped,
                 wire.wire_type,
-                draw_ctx.colors.fg_1,
+                color,
             );
         }
 
-        for (dev_id, (pos, device)) in &self.devices {
+        for (id, (pos, device)) in &self.devices {
+            let color = if selected.contains(id) {
+                draw_ctx.colors.selected
+            } else {
+                draw_ctx.colors.fg_1
+            };
+
             device.draw(
                 draw_ctx,
                 draw_ctx.world_to_viewport(pos.snapped),
                 24.0,
-                // self.selected.contains(dev_id),
-                false,
+                color,
             );
         }
     }

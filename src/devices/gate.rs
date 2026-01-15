@@ -1,6 +1,7 @@
 use egui::{FontId, RichText};
 use macroquad::{
     math::Vec2,
+    prelude::Color,
     shapes::{draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines},
 };
 
@@ -41,31 +42,13 @@ impl Gate {
         Some(out)
     }
 
-    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, color: Color) {
         let Vec2 { x, y } = position.into();
 
-        if is_selected {
-            draw_rectangle_lines(
-                x - (size / 2.0 + 4.0),
-                y - (size / 2.0 + 4.0),
-                size + 8.0,
-                size + 8.0,
-                1.0,
-                ctx.colors.fg_0.with_alpha(0.5),
-            );
-        }
-
         draw_rectangle(x - size / 2., y - size / 2., size, size, ctx.colors.bg_1);
-        draw_rectangle_lines(
-            x - size / 2.,
-            y - size / 2.,
-            size,
-            size,
-            1.0,
-            ctx.colors.fg_0,
-        );
+        draw_rectangle_lines(x - size / 2., y - size / 2., size, size, 1.0, color);
 
-        draw_symbol(ctx, x, y, size * 0.5, &self.operation);
+        draw_symbol(ctx, x, y, size * 0.5, &self.operation, color);
     }
 
     pub fn inspector(&mut self, ui: &mut egui::Ui) {
@@ -116,7 +99,7 @@ impl Gate {
     }
 }
 
-fn draw_symbol(ctx: &DrawContext, x: f32, y: f32, scale: f32, op: &BooleanOperation) {
+fn draw_symbol(ctx: &DrawContext, x: f32, y: f32, scale: f32, op: &BooleanOperation, color: Color) {
     let top = y - scale / 2.0;
     let bottom = y + scale / 2.0;
     let left = x - scale / 2.0;
@@ -124,32 +107,32 @@ fn draw_symbol(ctx: &DrawContext, x: f32, y: f32, scale: f32, op: &BooleanOperat
 
     match op {
         BooleanOperation::AND => {
-            draw_line(left, bottom, x, top, 1.0, ctx.colors.fg_0);
-            draw_line(x, top, right, bottom, 1.0, ctx.colors.fg_0);
+            draw_line(left, bottom, x, top, 1.0, color);
+            draw_line(x, top, right, bottom, 1.0, color);
         }
         BooleanOperation::OR => {
-            draw_line(left, top, x, bottom, 1.0, ctx.colors.fg_0);
-            draw_line(x, bottom, right, top, 1.0, ctx.colors.fg_0);
+            draw_line(left, top, x, bottom, 1.0, color);
+            draw_line(x, bottom, right, top, 1.0, color);
         }
         BooleanOperation::XOR => {
-            draw_circle_lines(x, y, scale / 2.0, 1.0, ctx.colors.fg_0);
-            draw_line(x, top, x, bottom, 1.0, ctx.colors.fg_0);
-            draw_line(left, y, right, y, 1.0, ctx.colors.fg_0);
+            draw_circle_lines(x, y, scale / 2.0, 1.0, color);
+            draw_line(x, top, x, bottom, 1.0, color);
+            draw_line(left, y, right, y, 1.0, color);
         }
         BooleanOperation::NAND => {
-            draw_line(left, bottom, x, y, 1.0, ctx.colors.fg_0);
-            draw_line(x, y, right, bottom, 1.0, ctx.colors.fg_0);
-            draw_line(left, top, right, top, 1.0, ctx.colors.fg_0);
+            draw_line(left, bottom, x, y, 1.0, color);
+            draw_line(x, y, right, bottom, 1.0, color);
+            draw_line(left, top, right, top, 1.0, color);
         }
         BooleanOperation::NOR => {
-            draw_line(left, y, x, bottom, 1.0, ctx.colors.fg_0);
-            draw_line(x, bottom, right, y, 1.0, ctx.colors.fg_0);
-            draw_line(left, top, right, top, 1.0, ctx.colors.fg_0);
+            draw_line(left, y, x, bottom, 1.0, color);
+            draw_line(x, bottom, right, y, 1.0, color);
+            draw_line(left, top, right, top, 1.0, color);
         }
         BooleanOperation::XNOR => {
-            draw_line(left, top, right, top, 1.0, ctx.colors.fg_0);
-            draw_line(left, y, right, y, 1.0, ctx.colors.fg_0);
-            draw_line(left, bottom, right, bottom, 1.0, ctx.colors.fg_0);
+            draw_line(left, top, right, top, 1.0, color);
+            draw_line(left, y, right, y, 1.0, color);
+            draw_line(left, bottom, right, bottom, 1.0, color);
         }
     }
 }

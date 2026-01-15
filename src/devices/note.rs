@@ -1,5 +1,5 @@
 use egui::{DragValue, FontId, RichText};
-use macroquad::{math::Vec2, shapes::draw_hexagon};
+use macroquad::{math::Vec2, prelude::Color, shapes::draw_hexagon};
 
 use crate::{
     app::{DrawContext, UpdateContext},
@@ -50,20 +50,20 @@ pub struct Note {
     pitch_class: PitchClass,
     velocity: u8,
 
-    event_sender: MidiEventSender,
+    event_sender: Option<MidiEventSender>,
 
     is_on: bool,
 }
 
 impl Note {
-    pub fn new(event_sender: MidiEventSender) -> Self {
+    pub fn new() -> Self {
         Note {
             midi_channel: 0,
             octave: 4,
             pitch_class: PitchClass::C,
             velocity: 100,
 
-            event_sender,
+            event_sender: None,
 
             is_on: false,
         }
@@ -85,7 +85,10 @@ impl Note {
                 vel: self.velocity.into(),
             },
         );
-        self.event_sender.send(event);
+
+        if let Some(sender) = &self.event_sender {
+            sender.send(event);
+        }
 
         self.is_on = true;
     }
@@ -102,12 +105,19 @@ impl Note {
                 vel: self.velocity.into(),
             },
         );
-        self.event_sender.send(event);
+
+        if let Some(sender) = &self.event_sender {
+            sender.send(event);
+        }
 
         self.is_on = false;
     }
 
     pub fn update(&mut self, ctx: &mut UpdateContext, inputs: Vec<bool>) -> Option<bool> {
+        if let None = self.event_sender {
+            self.event_sender = Some(ctx.midi_config.get_event_sender());
+        }
+
         if ctx.is_paused {
             self.turn_off();
             return None;
@@ -125,34 +135,14 @@ impl Note {
         None
     }
 
-    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, color: Color) {
         let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
-        if is_selected {
-            draw_hexagon(
-                x,
-                y,
-                radius + 4.0,
-                1.0,
-                false,
-                ctx.colors.fg_0,
-                ctx.colors.bg_0.with_alpha(0.0),
-            );
-        }
-
-        draw_hexagon(x, y, radius, 1.0, false, ctx.colors.fg_0, ctx.colors.bg_1);
+        draw_hexagon(x, y, radius, 1.0, false, color, ctx.colors.bg_1);
 
         if self.is_on {
-            draw_hexagon(
-                x,
-                y,
-                radius / 2.0,
-                0.0,
-                false,
-                ctx.colors.bg_1,
-                ctx.colors.fg_0,
-            );
+            draw_hexagon(x, y, radius / 2.0, 0.0, false, ctx.colors.bg_1, color);
         }
     }
 

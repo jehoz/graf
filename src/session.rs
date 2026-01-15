@@ -1,6 +1,7 @@
 use crate::{
     app::{DrawContext, UpdateContext},
     circuit::Circuit,
+    dag::DeviceId,
 };
 
 pub struct Session {
@@ -21,7 +22,7 @@ impl Session {
         self.circuit.update(ctx);
     }
 
-    pub fn draw(&self, ctx: &DrawContext) {
-        self.circuit.draw(ctx);
+    pub fn draw(&self, ctx: &DrawContext, selected: &Vec<DeviceId>) {
+        self.circuit.draw(ctx, selected);
     }
 }

@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use macroquad::{
     math::Vec2,
+    prelude::Color,
     shapes::{draw_poly, draw_poly_lines},
 };
 
@@ -95,28 +96,16 @@ impl Trigger {
         }
     }
 
-    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, is_selected: bool) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, color: Color) {
         let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
-        if is_selected {
-            draw_poly_lines(
-                x,
-                y,
-                3,
-                radius + 4.0,
-                90.0,
-                1.0,
-                ctx.colors.fg_0.with_alpha(0.5),
-            );
-        }
-
-        draw_poly_lines(x, y, 3, radius, 90.0, 2.0, ctx.colors.fg_0);
+        draw_poly_lines(x, y, 3, radius, 90.0, 2.0, color);
         draw_poly(x, y, 3, radius, 90.0, ctx.colors.bg_1);
 
         if let Some(t_rem) = self.time_remaining {
             let percent_done = (t_rem / self.duration).clamp(0.0, 1.0);
-            draw_poly(x, y, 3, radius * percent_done, 90.0, ctx.colors.fg_0);
+            draw_poly(x, y, 3, radius * percent_done, 90.0, color);
         }
     }
 

@@ -20,6 +20,7 @@ pub struct ColorPalette {
     pub bg_1: Color,
     pub bg_2: Color,
     pub bg_3: Color,
+    pub selected: Color,
     pub error: Color,
 }
 
