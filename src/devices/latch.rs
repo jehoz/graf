@@ -3,6 +3,7 @@ use macroquad::{
     prelude::Color,
     shapes::{draw_poly, draw_poly_lines},
 };
+use serde::{Deserialize, Serialize};
 
 use egui::{FontId, RichText};
 
@@ -11,7 +12,7 @@ use crate::{
     math::V2,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Latch {
     is_on: bool,
     prev_input: bool,

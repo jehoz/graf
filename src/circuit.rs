@@ -1,18 +1,17 @@
 use core::clone::Clone;
 use std::collections::HashMap;
 
-use macroquad::prelude::draw_circle;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{DrawContext, UpdateContext},
     dag::{self, Dag, DeviceId, Wire, WireType},
     devices::{Arity, Device},
-    drawing_utils::{draw_line_v, draw_wire_between_devices, DEVICE_WIDTH, SNAP_GRID_SIZE},
+    drawing_utils::{draw_wire_between_devices, DEVICE_WIDTH, SNAP_GRID_SIZE},
     math::{Rect, V2},
 };
 
-#[derive(Clone, Copy, Serialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct DevicePosition {
     raw: V2,
     snapped: V2,
@@ -44,6 +43,7 @@ impl From<V2> for DevicePosition {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Circuit {
     pub devices: HashMap<DeviceId, (DevicePosition, Device)>,
     pub dag: Dag,

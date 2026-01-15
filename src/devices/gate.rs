@@ -4,11 +4,12 @@ use macroquad::{
     prelude::Color,
     shapes::{draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines},
 };
+use serde::{Deserialize, Serialize};
 
 use crate::app::{DrawContext, UpdateContext};
 use crate::math::V2;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum BooleanOperation {
     AND,
     OR,
@@ -18,7 +19,7 @@ pub enum BooleanOperation {
     XNOR,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Gate {
     operation: BooleanOperation,
 }

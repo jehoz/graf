@@ -1,19 +1,19 @@
 use std::time::Duration;
 
+use egui::{DragValue, FontId, RichText, Slider};
 use macroquad::{
     math::Vec2,
     prelude::Color,
     shapes::{draw_poly, draw_poly_lines},
 };
-
-use egui::{DragValue, FontId, RichText, Slider};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{DrawContext, UpdateContext},
     math::V2,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Trigger {
     // duration in milliseconds that trigger will stay on after being set off
     duration: f32,

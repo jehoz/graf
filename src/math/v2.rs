@@ -1,10 +1,10 @@
 use core::ops::*;
 
 use macroquad::math::Vec2;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 // custom 2D vector type that is serializable and implicitly convertible to and from Vec2
-#[derive(PartialEq, Copy, Clone, Serialize)]
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub struct V2 {
     pub x: f32,
     pub y: f32,

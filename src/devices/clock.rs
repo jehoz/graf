@@ -1,15 +1,15 @@
 use egui::{DragValue, FontId, RichText, Slider};
-
 use macroquad::math::Vec2;
 use macroquad::prelude::Color;
 use macroquad::shapes::{draw_arc, draw_circle, draw_circle_lines};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{DrawContext, UpdateContext},
     math::V2,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Clock {
     // if true, the clock's cycle duration is a fraction of a note length
     bpm_sync: bool,

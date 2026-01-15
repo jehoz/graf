@@ -1,5 +1,6 @@
 use egui::Ui;
 use macroquad::prelude::Color;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{DrawContext, UpdateContext},
@@ -18,14 +19,14 @@ pub use latch::Latch;
 pub use note::Note;
 pub use trigger::Trigger;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Serialize, Deserialize)]
 pub enum Arity {
     Nullary,
     Unary,
     NAry,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum Device {
     Clock(Clock),
     Gate(Gate),

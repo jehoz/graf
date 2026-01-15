@@ -1,9 +1,12 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     app::{DrawContext, UpdateContext},
     circuit::Circuit,
     dag::DeviceId,
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct Session {
     pub circuit: Circuit,
     pub bpm: u32,

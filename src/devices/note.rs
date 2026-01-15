@@ -1,5 +1,6 @@
 use egui::{DragValue, FontId, RichText};
 use macroquad::{math::Vec2, prelude::Color, shapes::draw_hexagon};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     app::{DrawContext, UpdateContext},
@@ -8,7 +9,7 @@ use crate::{
     widgets::note_picker::NotePicker,
 };
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub enum PitchClass {
     C,
     Cs,
@@ -43,13 +44,14 @@ impl ToString for PitchClass {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Note {
     midi_channel: u8,
     octave: u8,
     pitch_class: PitchClass,
     velocity: u8,
 
+    #[serde(skip)]
     event_sender: Option<MidiEventSender>,
 
     is_on: bool,
