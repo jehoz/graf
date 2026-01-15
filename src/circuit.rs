@@ -89,6 +89,23 @@ impl Circuit {
         self.dag.remove_wire(from, to)
     }
 
+    /// Copies the contents of another circuit into this one
+    pub fn import_subcircuit(&mut self, subcircuit: &Circuit, position: V2) -> Vec<DeviceId> {
+        let mut translation = HashMap::new();
+        for (id, (pos, device)) in subcircuit.devices.iter() {
+            let new_id = self.add_device(device.clone(), pos.raw + position);
+            translation.insert(id, new_id);
+        }
+
+        for wire in subcircuit.dag.wires() {
+            let from = translation.get(&wire.from).unwrap();
+            let to = translation.get(&wire.to).unwrap();
+            self.connect_devices(*from, *to, wire.wire_type);
+        }
+
+        translation.values().map(|id| *id).collect()
+    }
+
     pub fn get_device(&self, device_id: DeviceId) -> Option<&Device> {
         self.devices.get(&device_id).map(|(_, dev)| dev)
     }

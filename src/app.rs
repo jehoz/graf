@@ -570,32 +570,9 @@ impl App {
     }
 
     fn paste_clipboard(&mut self, position: V2) {
-        /*
-        let (devices, edges) = &self.clipboard;
-
-        let mut new_devices = HashMap::new();
-        for (id, (pos, device)) in devices.iter() {
-            new_devices.insert(*id, (pos.clone(), device.clone()));
-        }
-        let edges = edges.clone();
-
-        let mut dev_id_map = HashMap::new();
-        for (old_id, (pos, device)) in new_devices.drain() {
-            let new_id = self.add_device(device, pos.raw + position);
-            dev_id_map.insert(old_id, new_id);
-        }
-
-        for edge in edges.clone().iter() {
-            let from = dev_id_map.get(&edge.from).unwrap();
-            let to = dev_id_map.get(&edge.to).unwrap();
-            self.connect_devices(*from, *to, edge.wire_type);
-        }
-
-        self.clear_selection();
-        for dev_id in dev_id_map.values() {
-            self.select_device(*dev_id);
-        }
-        */
-        todo!();
+        self.selected = self
+            .session
+            .circuit
+            .import_subcircuit(&self.clipboard, position);
     }
 }
