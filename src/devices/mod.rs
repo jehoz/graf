@@ -1,6 +1,9 @@
 use egui::Ui;
 
-use crate::{app::DrawContext, math::V2, session::UpdateContext};
+use crate::{
+    app::{DrawContext, UpdateContext},
+    math::V2,
+};
 
 pub mod clock;
 pub mod gate;

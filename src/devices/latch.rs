@@ -5,8 +5,10 @@ use macroquad::{
 
 use egui::{FontId, RichText};
 
-use crate::session::UpdateContext;
-use crate::{app::DrawContext, math::V2};
+use crate::{
+    app::{DrawContext, UpdateContext},
+    math::V2,
+};
 
 #[derive(Clone)]
 pub struct Latch {

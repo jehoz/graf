@@ -1,4 +1,5 @@
 use core::panic;
+use std::time::{Duration, Instant};
 
 use egui::{menu, style::WidgetVisuals, style::Widgets, Align2, CornerRadius, Stroke, Visuals};
 use macroquad::{
@@ -32,6 +33,32 @@ enum CursorState {
 }
 
 const INSPECTOR_WIDTH: f32 = 200.0;
+
+pub struct UpdateContext {
+    pub beat_clock: f32,
+    pub free_clock: Duration,
+    pub bpm: u32,
+
+    pub this_update: Instant,
+    pub last_update: Instant,
+
+    pub is_paused: bool,
+}
+
+impl UpdateContext {
+    pub fn new() -> Self {
+        UpdateContext {
+            beat_clock: 0.0,
+            free_clock: Duration::ZERO,
+            bpm: 120,
+
+            this_update: Instant::now(),
+            last_update: Instant::now(),
+
+            is_paused: false,
+        }
+    }
+}
 
 pub struct DrawContext {
     pub colors: ColorPalette,
@@ -123,6 +150,8 @@ impl DrawContext {
 pub struct App {
     session: Session,
     cursor: CursorState,
+
+    update_ctx: UpdateContext,
     draw_ctx: DrawContext,
 
     context_menu: Option<V2>,
@@ -135,6 +164,7 @@ impl App {
         App {
             session: Session::new(),
             cursor: CursorState::Idle,
+            update_ctx: UpdateContext::new(),
             draw_ctx: DrawContext::new(colors),
             context_menu: None,
             midi_config: MidiConfig::new(),
@@ -298,12 +328,23 @@ impl App {
         }
 
         if is_key_pressed(KeyCode::Space) {
-            self.session.toggle_pause();
+            self.toggle_pause();
         }
     }
 
     pub fn update(&mut self) {
-        self.session.update();
+        self.update_ctx.this_update = Instant::now();
+
+        if !self.update_ctx.is_paused {
+            let time_elapsed = self.update_ctx.this_update - self.update_ctx.last_update;
+            let beats_elapsed = time_elapsed.as_secs_f32() * (self.update_ctx.bpm as f32 / 60.0);
+
+            self.update_ctx.free_clock += time_elapsed;
+            self.update_ctx.beat_clock += beats_elapsed;
+        }
+
+        self.session.update(&mut self.update_ctx);
+        self.update_ctx.last_update = self.update_ctx.this_update;
 
         self.midi_config.process_events();
     }
@@ -374,23 +415,23 @@ impl App {
         egui::TopBottomPanel::bottom("bottom bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label("BPM");
-                ui.add(egui::DragValue::new(&mut self.session.update_ctx.bpm).range(20..=777));
+                ui.add(egui::DragValue::new(&mut self.update_ctx.bpm).range(20..=777));
 
                 ui.separator();
 
-                ui.label(format!("Beat {:.1}", self.session.update_ctx.beat_clock));
+                ui.label(format!("Beat {:.1}", self.update_ctx.beat_clock));
 
-                let pause_play_text = if self.session.update_ctx.is_paused {
+                let pause_play_text = if self.update_ctx.is_paused {
                     "Play "
                 } else {
                     "Pause"
                 };
                 if ui.button(pause_play_text).clicked() {
-                    self.session.toggle_pause();
+                    self.toggle_pause();
                 }
 
                 if ui.button("Reset").clicked() {
-                    self.session.reset();
+                    self.reset();
                 }
             });
         });
@@ -464,5 +505,19 @@ impl App {
         }
 
         self.session.draw(&self.draw_ctx);
+    }
+}
+
+impl App {
+    pub fn toggle_pause(&mut self) {
+        self.update_ctx.is_paused = !self.update_ctx.is_paused;
+    }
+
+    pub fn reset(&mut self) {
+        self.update_ctx.beat_clock = 0.0;
+        self.update_ctx.free_clock = Duration::ZERO;
+        self.update_ctx.last_update = Instant::now();
+
+        self.session.reset_devices();
     }
 }

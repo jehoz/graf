@@ -2,7 +2,9 @@ use egui::{DragValue, FontId, RichText};
 use macroquad::{math::Vec2, shapes::draw_hexagon};
 
 use crate::{
-    app::DrawContext, math::V2, midi::MidiEventSender, session::UpdateContext,
+    app::{DrawContext, UpdateContext},
+    math::V2,
+    midi::MidiEventSender,
     widgets::note_picker::NotePicker,
 };
 

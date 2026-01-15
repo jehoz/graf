@@ -1,48 +1,18 @@
 use core::clone::Clone;
-use std::{
-    collections::HashMap,
-    time::{Duration, Instant},
-};
+use std::collections::HashMap;
 
 use serde::Serialize;
 
 use crate::{
-    app::DrawContext,
+    app::{DrawContext, UpdateContext},
     dag::{self, Dag, DeviceId, Wire, WireType},
     devices::{Arity, Device},
     drawing_utils::{draw_wire_between_devices, DEVICE_WIDTH},
     math::{Rect, V2},
 };
 
-pub struct UpdateContext {
-    pub beat_clock: f32,
-    pub free_clock: Duration,
-    pub bpm: u32,
-
-    pub this_update: Instant,
-    pub last_update: Instant,
-
-    pub is_paused: bool,
-}
-
-impl UpdateContext {
-    pub fn new() -> Self {
-        UpdateContext {
-            beat_clock: 0.0,
-            free_clock: Duration::ZERO,
-            bpm: 120,
-
-            this_update: Instant::now(),
-            last_update: Instant::now(),
-
-            is_paused: false,
-        }
-    }
-}
-
 const SNAP_GRID_SIZE: f32 = 16.0;
 
-// perhaps not the most elegant solution but it was the least bad way I could think of...
 #[derive(Clone, Copy, Serialize)]
 struct DevicePosition {
     raw: V2,
@@ -81,8 +51,6 @@ pub struct Session {
 
     pub selected: Vec<DeviceId>,
     clipboard: (HashMap<DeviceId, (DevicePosition, Device)>, Vec<Wire>),
-
-    pub update_ctx: UpdateContext,
 }
 
 impl Session {
@@ -93,8 +61,6 @@ impl Session {
 
             selected: Vec::new(),
             clipboard: (HashMap::new(), Vec::new()),
-
-            update_ctx: UpdateContext::new(),
         }
     }
 
@@ -282,31 +248,13 @@ impl Session {
         }
     }
 
-    pub fn toggle_pause(&mut self) {
-        self.update_ctx.is_paused = !self.update_ctx.is_paused;
-    }
-
-    pub fn reset(&mut self) {
-        self.update_ctx.beat_clock = 0.0;
-        self.update_ctx.free_clock = Duration::ZERO;
-        self.update_ctx.last_update = Instant::now();
-
+    pub fn reset_devices(&mut self) {
         for (_, dev) in self.devices.values_mut() {
             dev.reset();
         }
     }
 
-    pub fn update(&mut self) {
-        self.update_ctx.this_update = Instant::now();
-
-        if !self.update_ctx.is_paused {
-            let time_elapsed = self.update_ctx.this_update - self.update_ctx.last_update;
-            let beats_elapsed = time_elapsed.as_secs_f32() * (self.update_ctx.bpm as f32 / 60.0);
-
-            self.update_ctx.free_clock += time_elapsed;
-            self.update_ctx.beat_clock += beats_elapsed;
-        }
-
+    pub fn update(&mut self, ctx: &mut UpdateContext) {
         let mut device_outputs: HashMap<DeviceId, bool> = HashMap::new();
         for dev_id in self.circuit.devices() {
             let inputs: Vec<bool> = self
@@ -319,12 +267,10 @@ impl Session {
                 .collect();
 
             let (_, dev) = self.devices.get_mut(dev_id).unwrap();
-            if let Some(output) = dev.update(&mut self.update_ctx, inputs) {
+            if let Some(output) = dev.update(ctx, inputs) {
                 device_outputs.insert(*dev_id, output);
             }
         }
-
-        self.update_ctx.last_update = self.update_ctx.this_update;
     }
 
     pub fn draw(&self, draw_ctx: &DrawContext) {

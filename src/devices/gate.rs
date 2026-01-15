@@ -4,9 +4,8 @@ use macroquad::{
     shapes::{draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines},
 };
 
-use crate::app::DrawContext;
+use crate::app::{DrawContext, UpdateContext};
 use crate::math::V2;
-use crate::session::UpdateContext;
 
 #[derive(Clone, PartialEq)]
 pub enum BooleanOperation {

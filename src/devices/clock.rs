@@ -2,7 +2,10 @@ use egui::{DragValue, FontId, RichText, Slider};
 use macroquad::math::Vec2;
 use macroquad::shapes::{draw_arc, draw_circle, draw_circle_lines};
 
-use crate::{app::DrawContext, math::V2, session::UpdateContext};
+use crate::{
+    app::{DrawContext, UpdateContext},
+    math::V2,
+};
 
 #[derive(Clone)]
 pub struct Clock {
