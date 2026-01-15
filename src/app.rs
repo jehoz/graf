@@ -44,6 +44,8 @@ pub struct UpdateContext {
 
     pub is_paused: bool,
 
+    pub midi_config: MidiConfig,
+
     // BPM is updated by the session when context is passed to the update method so that devices
     // have access to the session tempo.
     // Feels hacky... should think about a more elegant way to do this
@@ -60,6 +62,8 @@ impl UpdateContext {
             last_update: Instant::now(),
 
             is_paused: false,
+
+            midi_config: MidiConfig::new(),
 
             bpm: 0,
         }
@@ -163,8 +167,6 @@ pub struct App {
     draw_ctx: DrawContext,
 
     context_menu: Option<V2>,
-
-    midi_config: MidiConfig,
 }
 
 impl App {
@@ -177,7 +179,6 @@ impl App {
             update_ctx: UpdateContext::new(),
             draw_ctx: DrawContext::new(colors),
             context_menu: None,
-            midi_config: MidiConfig::new(),
         }
     }
 
@@ -360,7 +361,7 @@ impl App {
         self.session.update(&mut self.update_ctx);
         self.update_ctx.last_update = self.update_ctx.this_update;
 
-        self.midi_config.process_events();
+        self.update_ctx.midi_config.process_events();
     }
 
     pub fn ui(&mut self, ctx: &egui::Context) {
@@ -401,7 +402,7 @@ impl App {
                         self.context_menu = None;
                     }
                     if ui.button("Note").clicked() {
-                        let note = Note::new(self.midi_config.get_event_sender());
+                        let note = Note::new();
                         self.session
                             .circuit
                             .add_device(Device::Note(note), world_pos);
@@ -420,16 +421,16 @@ impl App {
                     ui.horizontal(|ui| {
                         ui.label("Ports: ");
                         if ui.button("🔃").clicked() {
-                            self.midi_config.refresh_ports();
+                            self.update_ctx.midi_config.refresh_ports();
                         }
                     });
 
-                    for (name, port, connected) in self.midi_config.ports.clone() {
+                    for (name, port, connected) in self.update_ctx.midi_config.ports.clone() {
                         if ui
                             .add_enabled(!connected, egui::Button::new(name))
                             .clicked()
                         {
-                            self.midi_config.connect_to_port(&port);
+                            self.update_ctx.midi_config.connect_to_port(&port);
                         }
                     }
                 });
@@ -528,7 +529,7 @@ impl App {
             }
         }
 
-        self.session.draw(&self.draw_ctx);
+        self.session.draw(&self.draw_ctx, &self.selected);
     }
 }
 
