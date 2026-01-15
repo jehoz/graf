@@ -12,6 +12,7 @@ use macroquad::{
 };
 
 use crate::{
+    circuit::Circuit,
     dag::{DeviceId, WireType},
     devices::{clock::Clock, gate::Gate, latch::Latch, note::Note, trigger::Trigger, Device},
     drawing_utils::{
@@ -37,12 +38,16 @@ const INSPECTOR_WIDTH: f32 = 200.0;
 pub struct UpdateContext {
     pub beat_clock: f32,
     pub free_clock: Duration,
-    pub bpm: u32,
 
     pub this_update: Instant,
     pub last_update: Instant,
 
     pub is_paused: bool,
+
+    // BPM is updated by the session when context is passed to the update method so that devices
+    // have access to the session tempo.
+    // Feels hacky... should think about a more elegant way to do this
+    pub bpm: u32,
 }
 
 impl UpdateContext {
@@ -50,12 +55,13 @@ impl UpdateContext {
         UpdateContext {
             beat_clock: 0.0,
             free_clock: Duration::ZERO,
-            bpm: 120,
 
             this_update: Instant::now(),
             last_update: Instant::now(),
 
             is_paused: false,
+
+            bpm: 0,
         }
     }
 }
@@ -150,6 +156,8 @@ impl DrawContext {
 pub struct App {
     session: Session,
     cursor: CursorState,
+    selected: Vec<DeviceId>,
+    clipboard: Circuit,
 
     update_ctx: UpdateContext,
     draw_ctx: DrawContext,
@@ -164,6 +172,8 @@ impl App {
         App {
             session: Session::new(),
             cursor: CursorState::Idle,
+            selected: Vec::new(),
+            clipboard: Circuit::new(),
             update_ctx: UpdateContext::new(),
             draw_ctx: DrawContext::new(colors),
             context_menu: None,
@@ -176,6 +186,7 @@ impl App {
         let m_pos = V2::new(mx, my);
         let device_under_mouse = self
             .session
+            .circuit
             .get_device_at(self.draw_ctx.viewport_to_world(m_pos));
 
         match self.cursor {
@@ -187,15 +198,15 @@ impl App {
                 match device_under_mouse {
                     Some(id) => {
                         if is_mouse_button_pressed(MouseButton::Left) {
-                            if !self.session.selected.contains(&id) {
-                                self.session.clear_selection();
-                                self.session.select_device(id);
+                            if !self.selected.contains(&id) {
+                                // if clicking a non-selected device, select it exclusively
+                                self.selected = vec![id];
                             }
                             self.cursor = CursorState::DraggingSelectedDevices(m_pos);
                         }
 
                         if is_mouse_button_pressed(MouseButton::Right) {
-                            let dev = self.session.get_device(id).unwrap();
+                            let dev = self.session.circuit.get_device(id).unwrap();
                             if dev.has_output() {
                                 if is_key_down(KeyCode::LeftShift)
                                     || is_key_down(KeyCode::RightShift)
@@ -213,11 +224,12 @@ impl App {
                         if is_mouse_button_pressed(MouseButton::Right) {
                             let wire_under_mouse = self
                                 .session
+                                .circuit
                                 .get_wire_at(self.draw_ctx.viewport_to_world(m_pos));
 
                             match wire_under_mouse {
                                 Some(edge) => {
-                                    self.session.disconnect_devices(edge.from, edge.to);
+                                    self.session.circuit.disconnect_devices(edge.from, edge.to);
                                     self.cursor =
                                         CursorState::DraggingLooseWire(edge.from, edge.wire_type);
                                 }
@@ -234,11 +246,11 @@ impl App {
             }
 
             CursorState::DraggingSelectedDevices(from) => {
-                self.session.move_selected_devices(m_pos - from);
+                self.move_selected_devices(m_pos - from);
                 self.cursor = CursorState::DraggingSelectedDevices(m_pos);
 
                 if is_mouse_button_released(MouseButton::Left) {
-                    self.session.snap_selected_devices();
+                    self.snap_selected_devices();
                     self.cursor = CursorState::Idle;
                 }
             }
@@ -247,7 +259,7 @@ impl App {
                 if is_mouse_button_released(MouseButton::Right) {
                     self.cursor = CursorState::Idle;
                 } else if let Some(to_id) = device_under_mouse {
-                    if self.session.can_connect(from_id, to_id) {
+                    if self.session.circuit.can_connect(from_id, to_id) {
                         self.cursor = CursorState::DraggingConnectedWire(from_id, to_id, wire_type);
                     } else {
                         self.cursor = CursorState::DraggingInvalidWire(from_id, wire_type);
@@ -257,12 +269,14 @@ impl App {
 
             CursorState::DraggingConnectedWire(from_id, to_id, wire_type) => {
                 if is_mouse_button_released(MouseButton::Right) {
-                    self.session.connect_devices(from_id, to_id, wire_type);
+                    self.session
+                        .circuit
+                        .connect_devices(from_id, to_id, wire_type);
                     self.cursor = CursorState::Idle;
                 } else {
                     match device_under_mouse {
                         Some(to_id) => {
-                            if !self.session.can_connect(from_id, to_id) {
+                            if !self.session.circuit.can_connect(from_id, to_id) {
                                 self.cursor = CursorState::DraggingInvalidWire(from_id, wire_type);
                             }
                         }
@@ -277,7 +291,7 @@ impl App {
                 } else {
                     match device_under_mouse {
                         Some(to_id) => {
-                            if self.session.can_connect(from_id, to_id) {
+                            if self.session.circuit.can_connect(from_id, to_id) {
                                 self.cursor =
                                     CursorState::DraggingConnectedWire(from_id, to_id, wire_type);
                             }
@@ -296,9 +310,10 @@ impl App {
                     let delta = (m_pos - starting_corner).abs();
                     let rect = Rect::new(left, top, delta.x, delta.y);
 
-                    self.session.clear_selection();
-                    self.session
-                        .select_devices_in_rect(rect.offset(self.draw_ctx.viewport_offset * -1.0));
+                    self.selected = self
+                        .session
+                        .circuit
+                        .get_devices_in_rect(rect.offset(self.draw_ctx.viewport_offset * -1.0));
                 }
             }
 
@@ -313,17 +328,16 @@ impl App {
         }
 
         if is_key_pressed(KeyCode::Delete) {
-            self.session.delete_selected_devices();
+            self.delete_selected_devices();
         }
 
         if is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl) {
             if is_key_pressed(KeyCode::C) {
-                self.session.copy_selected_devices();
+                self.copy_selected_devices();
             }
 
             if is_key_pressed(KeyCode::V) {
-                self.session
-                    .paste_clipboard(self.draw_ctx.viewport_to_world(m_pos));
+                self.paste_clipboard(self.draw_ctx.viewport_to_world(m_pos));
             }
         }
 
@@ -337,7 +351,7 @@ impl App {
 
         if !self.update_ctx.is_paused {
             let time_elapsed = self.update_ctx.this_update - self.update_ctx.last_update;
-            let beats_elapsed = time_elapsed.as_secs_f32() * (self.update_ctx.bpm as f32 / 60.0);
+            let beats_elapsed = time_elapsed.as_secs_f32() * (self.session.bpm as f32 / 60.0);
 
             self.update_ctx.free_clock += time_elapsed;
             self.update_ctx.beat_clock += beats_elapsed;
@@ -360,27 +374,37 @@ impl App {
                     let world_pos = self.draw_ctx.viewport_to_world(pos);
                     if ui.button("Clock").clicked() {
                         let clock = Clock::new();
-                        self.session.add_device(Device::Clock(clock), world_pos);
+                        self.session
+                            .circuit
+                            .add_device(Device::Clock(clock), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Trigger").clicked() {
                         let trigger = Trigger::new();
-                        self.session.add_device(Device::Trigger(trigger), world_pos);
+                        self.session
+                            .circuit
+                            .add_device(Device::Trigger(trigger), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Latch").clicked() {
                         let latch = Latch::new();
-                        self.session.add_device(Device::Latch(latch), world_pos);
+                        self.session
+                            .circuit
+                            .add_device(Device::Latch(latch), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Gate").clicked() {
                         let gate = Gate::new();
-                        self.session.add_device(Device::Gate(gate), world_pos);
+                        self.session
+                            .circuit
+                            .add_device(Device::Gate(gate), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Note").clicked() {
                         let note = Note::new(self.midi_config.get_event_sender());
-                        self.session.add_device(Device::Note(note), world_pos);
+                        self.session
+                            .circuit
+                            .add_device(Device::Note(note), world_pos);
                         self.context_menu = None;
                     }
                 });
@@ -415,7 +439,7 @@ impl App {
         egui::TopBottomPanel::bottom("bottom bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label("BPM");
-                ui.add(egui::DragValue::new(&mut self.update_ctx.bpm).range(20..=777));
+                ui.add(egui::DragValue::new(&mut self.session.bpm).range(20..=777));
 
                 ui.separator();
 
@@ -436,8 +460,8 @@ impl App {
             });
         });
 
-        if let [selected_id] = self.session.selected.as_slice() {
-            match self.session.get_device_mut(*selected_id) {
+        if let [selected_id] = self.selected.as_slice() {
+            match self.session.circuit.get_device_mut(*selected_id) {
                 Some(dev) => {
                     egui::Window::new("Edit Device")
                         .anchor(Align2::RIGHT_TOP, [-10.0, 30.0])
@@ -466,7 +490,7 @@ impl App {
             | CursorState::PanningViewport(_) => {}
 
             CursorState::DraggingLooseWire(from_id, wire_type) => {
-                let from_pos = self.session.device_position(from_id).unwrap();
+                let from_pos = self.session.circuit.device_position(from_id).unwrap();
                 draw_wire_from_device(
                     &self.draw_ctx,
                     from_pos,
@@ -476,8 +500,8 @@ impl App {
                 );
             }
             CursorState::DraggingConnectedWire(from_id, to_id, wire_type) => {
-                let from_pos = self.session.device_position(from_id).unwrap();
-                let to_pos = self.session.device_position(to_id).unwrap();
+                let from_pos = self.session.circuit.device_position(from_id).unwrap();
+                let to_pos = self.session.circuit.device_position(to_id).unwrap();
                 draw_wire_between_devices(
                     &self.draw_ctx,
                     from_pos,
@@ -487,7 +511,7 @@ impl App {
                 );
             }
             CursorState::DraggingInvalidWire(from_id, wire_type) => {
-                let from_pos = self.session.device_position(from_id).unwrap();
+                let from_pos = self.session.circuit.device_position(from_id).unwrap();
                 draw_wire_from_device(
                     &self.draw_ctx,
                     from_pos,
@@ -509,15 +533,69 @@ impl App {
 }
 
 impl App {
-    pub fn toggle_pause(&mut self) {
+    fn toggle_pause(&mut self) {
         self.update_ctx.is_paused = !self.update_ctx.is_paused;
     }
 
-    pub fn reset(&mut self) {
+    fn reset(&mut self) {
         self.update_ctx.beat_clock = 0.0;
         self.update_ctx.free_clock = Duration::ZERO;
         self.update_ctx.last_update = Instant::now();
 
-        self.session.reset_devices();
+        self.session.circuit.reset_devices();
+    }
+
+    fn move_selected_devices(&mut self, delta: V2) {
+        for dev_id in self.selected.iter() {
+            self.session.circuit.move_device(*dev_id, delta);
+        }
+    }
+
+    fn snap_selected_devices(&mut self) {
+        for dev_id in self.selected.iter() {
+            self.session.circuit.snap_device(*dev_id);
+        }
+    }
+
+    fn delete_selected_devices(&mut self) {
+        for dev_id in &self.selected {
+            self.session.circuit.delete_device(*dev_id);
+        }
+
+        self.selected.clear();
+    }
+
+    fn copy_selected_devices(&mut self) {
+        self.clipboard = self.session.circuit.clone_subcircuit(&self.selected);
+    }
+
+    fn paste_clipboard(&mut self, position: V2) {
+        /*
+        let (devices, edges) = &self.clipboard;
+
+        let mut new_devices = HashMap::new();
+        for (id, (pos, device)) in devices.iter() {
+            new_devices.insert(*id, (pos.clone(), device.clone()));
+        }
+        let edges = edges.clone();
+
+        let mut dev_id_map = HashMap::new();
+        for (old_id, (pos, device)) in new_devices.drain() {
+            let new_id = self.add_device(device, pos.raw + position);
+            dev_id_map.insert(old_id, new_id);
+        }
+
+        for edge in edges.clone().iter() {
+            let from = dev_id_map.get(&edge.from).unwrap();
+            let to = dev_id_map.get(&edge.to).unwrap();
+            self.connect_devices(*from, *to, edge.wire_type);
+        }
+
+        self.clear_selection();
+        for dev_id in dev_id_map.values() {
+            self.select_device(*dev_id);
+        }
+        */
+        todo!();
     }
 }

@@ -4,6 +4,7 @@ use macroquad::prelude::*;
 use crate::drawing_utils::ColorPalette;
 
 mod app;
+mod circuit;
 mod dag;
 mod devices;
 mod drawing_utils;

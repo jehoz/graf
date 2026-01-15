@@ -9,6 +9,8 @@ use crate::{app::DrawContext, dag::WireType, math::V2};
 
 pub const DEVICE_WIDTH: f32 = 24.0;
 
+pub const SNAP_GRID_SIZE: f32 = 16.0;
+
 pub struct ColorPalette {
     pub fg_0: Color,
     pub fg_1: Color,
