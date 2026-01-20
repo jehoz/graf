@@ -1,5 +1,12 @@
 use core::panic;
-use std::time::{Duration, Instant};
+use std::{
+    error::Error,
+    fs,
+    fs::File,
+    io::BufReader,
+    path::{Path, PathBuf},
+    time::{Duration, Instant},
+};
 
 use egui::{menu, style::WidgetVisuals, style::Widgets, Align2, CornerRadius, Stroke, Visuals};
 use macroquad::{
@@ -10,6 +17,7 @@ use macroquad::{
     shapes::draw_rectangle_lines,
     window::clear_background,
 };
+use rfd::FileDialog;
 
 use crate::{
     circuit::Circuit,
@@ -159,6 +167,8 @@ impl DrawContext {
 
 pub struct App {
     session: Session,
+    session_path: Option<PathBuf>,
+
     cursor: CursorState,
     selected: Vec<DeviceId>,
     clipboard: Circuit,
@@ -173,6 +183,7 @@ impl App {
     pub fn new(colors: ColorPalette) -> Self {
         App {
             session: Session::new(),
+            session_path: None,
             cursor: CursorState::Idle,
             selected: Vec::new(),
             clipboard: Circuit::new(),
@@ -339,6 +350,29 @@ impl App {
 
             if is_key_pressed(KeyCode::V) {
                 self.paste_clipboard(self.draw_ctx.viewport_to_world(m_pos));
+            }
+
+            if is_key_pressed(KeyCode::S) {
+                match &self.session_path {
+                    None => {
+                        let dialog = FileDialog::new().set_file_name("Untitled.graf");
+                        if let Some(save_path) = dialog.save_file() {
+                            self.save_session(&save_path);
+                            self.session_path = Some(save_path);
+                        }
+                    }
+                    Some(save_path) => self.save_session(&save_path),
+                }
+            }
+
+            if is_key_pressed(KeyCode::O) {
+                let dialog = FileDialog::new();
+                if let Some(load_path) = dialog.pick_file() {
+                    match self.load_session(&load_path) {
+                        Ok(()) => self.session_path = Some(load_path),
+                        Err(e) => eprintln!("Failed to load session from file: {}", e),
+                    }
+                }
             }
         }
 
@@ -575,5 +609,19 @@ impl App {
             .session
             .circuit
             .import_subcircuit(&self.clipboard, position);
+    }
+
+    fn save_session(&self, path: &Path) {
+        let serialized = serde_json::to_string(&self.session).unwrap();
+        if let Err(e) = fs::write(path, serialized) {
+            println!("{}", e);
+        }
+    }
+
+    fn load_session(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        self.session = serde_json::from_reader(reader)?;
+        Ok(())
     }
 }
