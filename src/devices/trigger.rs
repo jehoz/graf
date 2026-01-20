@@ -27,6 +27,7 @@ pub struct Trigger {
     ready_to_fire: bool,
     time_remaining: Option<f32>,
 
+    #[serde(skip)]
     prev_clock_time: Duration,
 }
 
