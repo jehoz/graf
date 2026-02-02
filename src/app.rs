@@ -352,6 +352,10 @@ impl App {
                 self.paste_clipboard(self.draw_ctx.viewport_to_world(m_pos));
             }
 
+            if is_key_pressed(KeyCode::N) {
+                self.new_session();
+            }
+
             if is_key_pressed(KeyCode::S) {
                 self.save_session();
             }
@@ -437,6 +441,9 @@ impl App {
         egui::TopBottomPanel::top("top bar").show(ctx, |ui| {
             menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
+                    if ui.button("New session").clicked() {
+                        self.new_session();
+                    }
                     if ui.button("Open session").clicked() {
                         self.open_session();
                     }
@@ -639,5 +646,12 @@ impl App {
                 Err(e) => eprintln!("Failed to load session from file: {}", e),
             }
         }
+    }
+
+    fn new_session(&mut self) {
+        // TODO make user confirm if there are unsaved changes
+        self.session = Session::new();
+        self.session_path = None;
+        self.reset();
     }
 }
