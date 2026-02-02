@@ -353,26 +353,11 @@ impl App {
             }
 
             if is_key_pressed(KeyCode::S) {
-                match &self.session_path {
-                    None => {
-                        let dialog = FileDialog::new().set_file_name("Untitled.graf");
-                        if let Some(save_path) = dialog.save_file() {
-                            self.save_session(&save_path);
-                            self.session_path = Some(save_path);
-                        }
-                    }
-                    Some(save_path) => self.save_session(&save_path),
-                }
+                self.save_session();
             }
 
             if is_key_pressed(KeyCode::O) {
-                let dialog = FileDialog::new();
-                if let Some(load_path) = dialog.pick_file() {
-                    match self.load_session(&load_path) {
-                        Ok(()) => self.session_path = Some(load_path),
-                        Err(e) => eprintln!("Failed to load session from file: {}", e),
-                    }
-                }
+                self.open_session();
             }
         }
 
@@ -451,6 +436,14 @@ impl App {
 
         egui::TopBottomPanel::top("top bar").show(ctx, |ui| {
             menu::bar(ui, |ui| {
+                ui.menu_button("File", |ui| {
+                    if ui.button("Open session").clicked() {
+                        self.open_session();
+                    }
+                    if ui.button("Save session").clicked() {
+                        self.save_session();
+                    }
+                });
                 ui.menu_button("MIDI Setup", |ui| {
                     ui.horizontal(|ui| {
                         ui.label("Ports: ");
@@ -611,17 +604,40 @@ impl App {
             .import_subcircuit(&self.clipboard, position);
     }
 
-    fn save_session(&self, path: &Path) {
+    fn write_session_to_file(&self, path: &Path) {
         let serialized = serde_json::to_string(&self.session).unwrap();
         if let Err(e) = fs::write(path, serialized) {
             println!("{}", e);
         }
     }
 
-    fn load_session(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
+    fn read_session_from_file(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         self.session = serde_json::from_reader(reader)?;
         Ok(())
+    }
+
+    fn save_session(&mut self) {
+        match &self.session_path {
+            None => {
+                let dialog = FileDialog::new().set_file_name("Untitled.graf");
+                if let Some(save_path) = dialog.save_file() {
+                    self.write_session_to_file(&save_path);
+                    self.session_path = Some(save_path);
+                }
+            }
+            Some(save_path) => self.write_session_to_file(&save_path),
+        }
+    }
+
+    fn open_session(&mut self) {
+        let dialog = FileDialog::new();
+        if let Some(load_path) = dialog.pick_file() {
+            match self.read_session_from_file(&load_path) {
+                Ok(()) => self.session_path = Some(load_path),
+                Err(e) => eprintln!("Failed to load session from file: {}", e),
+            }
+        }
     }
 }
