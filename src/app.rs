@@ -39,6 +39,7 @@ enum CursorState {
     DraggingInvalidWire(DeviceId, WireType),
     DraggingSelectBox(V2),
     PanningViewport(V2),
+    PendingDevices(V2),
 }
 
 const INSPECTOR_WIDTH: f32 = 200.0;
@@ -172,6 +173,7 @@ pub struct App {
     cursor: CursorState,
     selected: Vec<DeviceId>,
     clipboard: Circuit,
+    pending: Option<Circuit>,
 
     update_ctx: UpdateContext,
     draw_ctx: DrawContext,
@@ -187,6 +189,7 @@ impl App {
             cursor: CursorState::Idle,
             selected: Vec::new(),
             clipboard: Circuit::new(),
+            pending: None,
             update_ctx: UpdateContext::new(),
             draw_ctx: DrawContext::new(colors),
             context_menu: None,
@@ -215,6 +218,7 @@ impl App {
                                 self.selected = vec![id];
                             }
                             self.cursor = CursorState::DraggingSelectedDevices(m_pos);
+                            // TODO snap here?
                         }
 
                         if is_mouse_button_pressed(MouseButton::Right) {
@@ -334,6 +338,25 @@ impl App {
                 self.cursor = CursorState::PanningViewport(m_pos);
 
                 if is_mouse_button_released(MouseButton::Middle) {
+                    self.cursor = CursorState::Idle;
+                }
+            }
+
+            CursorState::PendingDevices(from) => {
+                if let Some(pending) = &self.pending {
+                    if is_mouse_button_pressed(MouseButton::Left) {
+                        self.selected = self.session.circuit.import_subcircuit(&pending);
+
+                        self.pending = None;
+                        self.cursor = CursorState::Idle;
+                    } else if is_mouse_button_pressed(MouseButton::Right) {
+                        self.pending = None;
+                        self.cursor = CursorState::Idle;
+                    } else {
+                        self.move_pending_devices(m_pos - from);
+                        self.cursor = CursorState::PendingDevices(m_pos);
+                    }
+                } else {
                     self.cursor = CursorState::Idle;
                 }
             }
@@ -561,6 +584,16 @@ impl App {
                 let delta = (m_pos - starting_corner).abs();
                 draw_rectangle_lines(left, top, delta.x, delta.y, 1.0, self.draw_ctx.colors.fg_2);
             }
+            CursorState::PendingDevices(_) => {
+                if let Some(pending) = &self.pending {
+                    pending.draw(
+                        &self.draw_ctx,
+                        self.draw_ctx.colors.selected.with_alpha(0.5),
+                        &[],
+                        self.draw_ctx.colors.fg_1,
+                    )
+                }
+            }
         }
 
         self.session.draw(&self.draw_ctx, &self.selected);
@@ -586,6 +619,12 @@ impl App {
         }
     }
 
+    fn move_pending_devices(&mut self, delta: V2) {
+        if let Some(ref mut pending) = self.pending {
+            pending.move_all_devices(delta);
+        }
+    }
+
     fn snap_selected_devices(&mut self) {
         for dev_id in self.selected.iter() {
             self.session.circuit.snap_device(*dev_id);
@@ -605,10 +644,10 @@ impl App {
     }
 
     fn paste_clipboard(&mut self, position: V2) {
-        self.selected = self
-            .session
-            .circuit
-            .import_subcircuit(&self.clipboard, position);
+        self.pending = Some(self.clipboard.clone());
+        self.move_pending_devices(position);
+        self.selected.clear();
+        self.cursor = CursorState::PendingDevices(position);
     }
 
     fn write_session_to_file(&self, path: &Path) {

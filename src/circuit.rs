@@ -44,7 +44,7 @@ impl From<V2> for DevicePosition {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Circuit {
     pub devices: HashMap<DeviceId, (DevicePosition, Device)>,
     pub dag: Dag,
@@ -76,6 +76,12 @@ impl Circuit {
             .map(|(p, _)| p.modify(delta));
     }
 
+    pub fn move_all_devices(&mut self, delta: V2) {
+        for (_, (p, _)) in self.devices.iter_mut() {
+            p.modify(delta);
+        }
+    }
+
     pub fn snap_device(&mut self, device_id: DeviceId) {
         self.devices.get_mut(&device_id).map(|(p, _)| p.snap());
     }
@@ -92,10 +98,10 @@ impl Circuit {
     }
 
     /// Copies the contents of another circuit into this one
-    pub fn import_subcircuit(&mut self, subcircuit: &Circuit, position: V2) -> Vec<DeviceId> {
+    pub fn import_subcircuit(&mut self, subcircuit: &Circuit) -> Vec<DeviceId> {
         let mut translation = HashMap::new();
         for (id, (pos, device)) in subcircuit.devices.iter() {
-            let new_id = self.add_device(device.clone(), pos.raw + position);
+            let new_id = self.add_device(device.clone(), pos.raw);
             translation.insert(id, new_id);
         }
 

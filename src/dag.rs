@@ -22,7 +22,7 @@ pub struct Wire {
 
 pub struct IllegalWireError;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Dag {
     id_counter: u32,
     wires: Vec<Wire>,
