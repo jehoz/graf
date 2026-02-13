@@ -1,6 +1,7 @@
 use core::clone::Clone;
 use std::collections::HashMap;
 
+use macroquad::color::Color;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -250,16 +251,23 @@ impl Circuit {
         }
     }
 
-    pub fn draw(&self, draw_ctx: &DrawContext, selected: &Vec<DeviceId>) {
+    pub fn draw(
+        &self,
+        draw_ctx: &DrawContext,
+        color: Color,
+        selected_devices: &[DeviceId],
+        selected_color: Color,
+    ) {
         for wire in self.dag.wires() {
             let (from_pos, _) = self.devices.get(&wire.from).unwrap();
             let (to_pos, _) = self.devices.get(&wire.to).unwrap();
 
-            let color = if selected.contains(&wire.from) && selected.contains(&wire.to) {
-                draw_ctx.colors.selected
-            } else {
-                draw_ctx.colors.fg_1
-            };
+            let color =
+                if selected_devices.contains(&wire.from) && selected_devices.contains(&wire.to) {
+                    selected_color
+                } else {
+                    color
+                };
 
             draw_wire_between_devices(
                 draw_ctx,
@@ -271,10 +279,10 @@ impl Circuit {
         }
 
         for (id, (pos, device)) in &self.devices {
-            let color = if selected.contains(id) {
-                draw_ctx.colors.selected
+            let color = if selected_devices.contains(id) {
+                selected_color
             } else {
-                draw_ctx.colors.fg_1
+                color
             };
 
             device.draw(

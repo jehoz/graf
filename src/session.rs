@@ -25,7 +25,8 @@ impl Session {
         self.circuit.update(ctx);
     }
 
-    pub fn draw(&self, ctx: &DrawContext, selected: &Vec<DeviceId>) {
-        self.circuit.draw(ctx, selected);
+    pub fn draw(&self, ctx: &DrawContext, selected: &[DeviceId]) {
+        self.circuit
+            .draw(ctx, ctx.colors.fg_1, selected, ctx.colors.selected);
     }
 }
