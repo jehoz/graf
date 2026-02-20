@@ -1,7 +1,7 @@
 use macroquad::{
     math::Vec2,
     prelude::Color,
-    shapes::{draw_poly, draw_poly_lines},
+    shapes::{draw_rectangle, draw_rectangle_lines},
 };
 use serde::{Deserialize, Serialize};
 
@@ -41,11 +41,27 @@ impl Latch {
         let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
-        draw_poly_lines(x, y, 3, radius, -90.0, 2.0, color);
-        draw_poly(x, y, 3, radius, -90.0, ctx.colors.bg_1);
+        let inner_padding = 0.3 * radius;
+        let inner_width = 0.7 * radius;
 
         if self.is_on {
-            draw_poly(x, y, 3, radius / 2.0, -90.0, color);
+            draw_rectangle_lines(x - radius, y - radius * 0.67, size, size * 0.67, 2.0, color);
+            draw_rectangle(
+                (x + radius) - (inner_padding + inner_width),
+                y - inner_width * 0.5,
+                inner_width,
+                inner_width,
+                color,
+            );
+        } else {
+            draw_rectangle_lines(x - radius, y - radius * 0.67, size, size * 0.67, 2.0, color);
+            draw_rectangle(
+                (x - radius) + inner_padding,
+                y - inner_width * 0.5,
+                inner_width,
+                inner_width,
+                color,
+            );
         }
     }
 
