@@ -373,6 +373,7 @@ impl App {
 
             if is_key_pressed(KeyCode::V) {
                 self.paste_clipboard(self.draw_ctx.viewport_to_world(m_pos));
+                self.cursor = CursorState::PendingDevices(m_pos);
             }
 
             if is_key_pressed(KeyCode::N) {
@@ -647,7 +648,6 @@ impl App {
         self.pending = Some(self.clipboard.clone());
         self.move_pending_devices(position);
         self.selected.clear();
-        self.cursor = CursorState::PendingDevices(position);
     }
 
     fn write_session_to_file(&self, path: &Path) {
