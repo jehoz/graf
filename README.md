@@ -44,3 +44,29 @@ A latch has an internal state (ON or OFF) which is also its output.  The latch t
 
 ### Note
 A note is what turns an ON/OFF signal into an actual MIDI event.  Notes take a single input and send messages out of the connected MIDI port to turn a note on or off.
+
+## Keybinds
+
+### Session
+| | |
+|-|-|
+| `Ctrl-O` | Load a previously saved session |
+| `Ctrl-S` | Save the current session |
+| `Ctrl-N` | Start a new session |
+| `Space` | Pause/Play the session |
+
+### 
+| | |
+|-|-|
+| `Ctrl-C` | Copy selection to clipboard |
+| `Ctrl-V` | Paste clipboard |
+| `Delete` | Delete selected devices |
+
+### Create devices
+| | |
+|-|-|
+| `Shift-C` | Create a *clock* |
+| `Shift-G` | Create a *gate* |
+| `Shift-T` | Create a *trigger* |
+| `Shift-L` | Create a *latch* |
+| `Shift-N` | Create a *note* |
