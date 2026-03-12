@@ -300,3 +300,11 @@ impl Circuit {
         }
     }
 }
+
+impl From<Device> for Circuit {
+    fn from(d: Device) -> Self {
+        let mut c = Circuit::new();
+        c.add_device(d, V2::ZERO);
+        c
+    }
+}
