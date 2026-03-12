@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use bitflags::bitflags;
-use macroquad::input::KeyCode;
+use macroquad::prelude::{get_keys_pressed, is_key_down, KeyCode};
 
 bitflags! {
-    #[derive(PartialEq, Eq, Hash)]
+    #[derive(PartialEq, Eq, Hash, Clone, Copy)]
     pub struct Modifier: u8 {
         const None = 0b00000000;
         const Ctrl = 0b00000001;
@@ -15,7 +15,7 @@ bitflags! {
 }
 
 #[derive(PartialEq, Eq, Hash)]
-struct Input {
+pub struct Input {
     modifiers: Modifier,
     key: KeyCode,
 }
@@ -26,7 +26,8 @@ impl Input {
     }
 }
 
-enum Action {
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum Action {
     LoadSession,
     SaveSession,
     NewSession,
@@ -36,6 +37,31 @@ enum Action {
     DeleteSelected,
 
     TogglePause,
+}
+
+pub fn process_inputs(keybinds: &HashMap<Input, Action>) -> Vec<Action> {
+    let mut modifier = Modifier::None;
+    if is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl) {
+        modifier |= Modifier::Ctrl;
+    }
+    if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
+        modifier |= Modifier::Shift;
+    }
+    if is_key_down(KeyCode::LeftAlt) || is_key_down(KeyCode::RightAlt) {
+        modifier |= Modifier::Alt;
+    }
+    if is_key_down(KeyCode::LeftSuper) || is_key_down(KeyCode::RightSuper) {
+        modifier |= Modifier::Super;
+    }
+
+    let mut actions = vec![];
+    for key in get_keys_pressed().iter() {
+        if let Some(action) = keybinds.get(&Input::new(modifier, *key)) {
+            actions.push(*action);
+        }
+    }
+
+    actions
 }
 
 pub fn default_keybinds() -> HashMap<Input, Action> {

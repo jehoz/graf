@@ -1,5 +1,6 @@
 use core::panic;
 use std::{
+    collections::HashMap,
     error::Error,
     fs,
     fs::File,
@@ -26,6 +27,7 @@ use crate::{
     drawing_utils::{
         color_to_color32, draw_wire_between_devices, draw_wire_from_device, ColorPalette,
     },
+    keybinds::{default_keybinds, process_inputs, Action, Input},
     math::{Rect, V2},
     midi::MidiConfig,
     session::Session,
@@ -170,6 +172,8 @@ pub struct App {
     session: Session,
     session_path: Option<PathBuf>,
 
+    keybinds: HashMap<Input, Action>,
+
     cursor: CursorState,
     selected: Vec<DeviceId>,
     clipboard: Circuit,
@@ -186,6 +190,7 @@ impl App {
         App {
             session: Session::new(),
             session_path: None,
+            keybinds: default_keybinds(),
             cursor: CursorState::Idle,
             selected: Vec::new(),
             clipboard: Circuit::new(),
@@ -362,35 +367,18 @@ impl App {
             }
         }
 
-        if is_key_pressed(KeyCode::Delete) {
-            self.delete_selected_devices();
-        }
+        for action in process_inputs(&self.keybinds) {
+            use Action::*;
 
-        if is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl) {
-            if is_key_pressed(KeyCode::C) {
-                self.copy_selected_devices();
+            match action {
+                LoadSession => self.open_session(),
+                SaveSession => self.save_session(),
+                NewSession => self.new_session(),
+                CopySelected => self.copy_selected_devices(),
+                PasteClipboard => self.paste_clipboard(m_pos),
+                DeleteSelected => self.delete_selected_devices(),
+                TogglePause => self.toggle_pause(),
             }
-
-            if is_key_pressed(KeyCode::V) {
-                self.paste_clipboard(self.draw_ctx.viewport_to_world(m_pos));
-                self.cursor = CursorState::PendingDevices(m_pos);
-            }
-
-            if is_key_pressed(KeyCode::N) {
-                self.new_session();
-            }
-
-            if is_key_pressed(KeyCode::S) {
-                self.save_session();
-            }
-
-            if is_key_pressed(KeyCode::O) {
-                self.open_session();
-            }
-        }
-
-        if is_key_pressed(KeyCode::Space) {
-            self.toggle_pause();
         }
     }
 
@@ -644,10 +632,13 @@ impl App {
         self.clipboard = self.session.circuit.clone_subcircuit(&self.selected);
     }
 
-    fn paste_clipboard(&mut self, position: V2) {
+    fn paste_clipboard(&mut self, mouse_position: V2) {
+        let world_position = self.draw_ctx.viewport_to_world(mouse_position);
+
         self.pending = Some(self.clipboard.clone());
-        self.move_pending_devices(position);
+        self.move_pending_devices(world_position);
         self.selected.clear();
+        self.cursor = CursorState::PendingDevices(mouse_position);
     }
 
     fn write_session_to_file(&self, path: &Path) {
