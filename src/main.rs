@@ -8,6 +8,7 @@ mod circuit;
 mod dag;
 mod devices;
 mod drawing_utils;
+mod keybinds;
 mod math;
 mod midi;
 mod session;
