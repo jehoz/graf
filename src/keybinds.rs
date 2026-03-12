@@ -37,6 +37,12 @@ pub enum Action {
     DeleteSelected,
 
     TogglePause,
+
+    CreateClock,
+    CreateGate,
+    CreateTrigger,
+    CreateLatch,
+    CreateNote,
 }
 
 pub fn process_inputs(keybinds: &HashMap<Input, Action>) -> Vec<Action> {
@@ -75,5 +81,10 @@ pub fn default_keybinds() -> HashMap<Input, Action> {
         (Input::new(Modifier::Ctrl, KeyCode::V), PasteClipboard),
         (Input::new(Modifier::None, KeyCode::Delete), DeleteSelected),
         (Input::new(Modifier::None, KeyCode::Space), TogglePause),
+        (Input::new(Modifier::Shift, KeyCode::C), CreateClock),
+        (Input::new(Modifier::Shift, KeyCode::G), CreateGate),
+        (Input::new(Modifier::Shift, KeyCode::T), CreateTrigger),
+        (Input::new(Modifier::Shift, KeyCode::L), CreateLatch),
+        (Input::new(Modifier::Shift, KeyCode::N), CreateNote),
     ])
 }

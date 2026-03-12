@@ -375,9 +375,15 @@ impl App {
                 SaveSession => self.save_session(),
                 NewSession => self.new_session(),
                 CopySelected => self.copy_selected_devices(),
-                PasteClipboard => self.paste_clipboard(m_pos),
+                PasteClipboard => self.set_pending(self.clipboard.clone()),
                 DeleteSelected => self.delete_selected_devices(),
                 TogglePause => self.toggle_pause(),
+
+                CreateClock => self.set_pending(Device::Clock(Clock::new()).into()),
+                CreateGate => self.set_pending(Device::Gate(Gate::new()).into()),
+                CreateTrigger => self.set_pending(Device::Trigger(Trigger::new()).into()),
+                CreateLatch => self.set_pending(Device::Latch(Latch::new()).into()),
+                CreateNote => self.set_pending(Device::Note(Note::new()).into()),
             }
         }
     }
@@ -602,6 +608,17 @@ impl App {
         self.session.circuit.reset_devices();
     }
 
+    fn set_pending(&mut self, c: Circuit) {
+        let (mx, my) = mouse_position();
+        let m_pos = V2::new(mx, my);
+        let world_pos = self.draw_ctx.viewport_to_world(m_pos);
+
+        self.pending = Some(c);
+        self.move_pending_devices(world_pos);
+        self.selected.clear();
+        self.cursor = CursorState::PendingDevices(m_pos);
+    }
+
     fn move_selected_devices(&mut self, delta: V2) {
         for dev_id in self.selected.iter() {
             self.session.circuit.move_device(*dev_id, delta);
@@ -630,15 +647,6 @@ impl App {
 
     fn copy_selected_devices(&mut self) {
         self.clipboard = self.session.circuit.clone_subcircuit(&self.selected);
-    }
-
-    fn paste_clipboard(&mut self, mouse_position: V2) {
-        let world_position = self.draw_ctx.viewport_to_world(mouse_position);
-
-        self.pending = Some(self.clipboard.clone());
-        self.move_pending_devices(world_position);
-        self.selected.clear();
-        self.cursor = CursorState::PendingDevices(mouse_position);
     }
 
     fn write_session_to_file(&self, path: &Path) {
