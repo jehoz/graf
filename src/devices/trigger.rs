@@ -82,7 +82,7 @@ impl Trigger {
             self.ready_to_fire = true;
         }
 
-        let delta_t = ctx.free_clock - self.prev_clock_time;
+        let delta_t = ctx.free_clock.saturating_sub(self.prev_clock_time);
         self.prev_clock_time = ctx.free_clock;
 
         if let Some(t_prev) = self.time_remaining {

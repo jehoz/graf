@@ -688,6 +688,7 @@ impl App {
 
     fn new_session(&mut self) {
         // TODO make user confirm if there are unsaved changes
+        self.selected.clear();
         self.session = Session::new();
         self.session_path = None;
         self.reset();
