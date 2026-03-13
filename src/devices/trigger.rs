@@ -4,7 +4,7 @@ use egui::{DragValue, FontId, RichText, Slider};
 use macroquad::{
     math::Vec2,
     prelude::Color,
-    shapes::{draw_poly, draw_poly_lines},
+    shapes::{draw_line, draw_rectangle, draw_rectangle_lines},
 };
 use serde::{Deserialize, Serialize};
 
@@ -51,7 +51,8 @@ impl Trigger {
             let (numerator, denominator) = self.bpm_duration;
             let beats = (numerator as f32 / denominator as f32) * 4.0;
             let ms_per_beat = 60000.0 / ctx.bpm as f32;
-            beats * ms_per_beat
+            self.duration = beats * ms_per_beat;
+            self.duration
         } else {
             self.duration
         };
@@ -97,16 +98,26 @@ impl Trigger {
         }
     }
 
-    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, color: Color) {
+    pub fn draw(&self, _ctx: &DrawContext, position: V2, size: f32, color: Color) {
         let Vec2 { x, y } = position.into();
         let radius = size / 2.0;
 
-        draw_poly_lines(x, y, 3, radius, 90.0, 2.0, color);
-        draw_poly(x, y, 3, radius, 90.0, ctx.colors.bg_1);
-
-        if let Some(t_rem) = self.time_remaining {
-            let percent_done = (t_rem / self.duration).clamp(0.0, 1.0);
-            draw_poly(x, y, 3, radius * percent_done, 90.0, color);
+        match self.time_remaining {
+            None => {
+                draw_line(x, y - radius * 0.33, x, y + radius, 2.0, color);
+                draw_rectangle_lines(x - radius, y - radius, size, size * 0.33, 2.0, color);
+            }
+            Some(t_rem) => {
+                draw_line(x, y - radius, x, y + radius, 2.0, color);
+                let percent_done = (t_rem / self.duration).clamp(0.0, 1.0);
+                draw_rectangle(
+                    x - radius,
+                    y - radius + (percent_done * radius * 1.33),
+                    size,
+                    size * 0.33,
+                    color,
+                );
+            }
         }
     }
 
