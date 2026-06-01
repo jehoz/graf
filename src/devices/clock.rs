@@ -46,10 +46,10 @@ impl Clock {
             let (numerator, denominator) = self.bpm_duration;
             let beat_period = (numerator as f32 / denominator as f32) * 4.0;
 
-            self.cycle_position = ((ctx.beat_clock / beat_period) + self.offset) % 1.0;
+            self.cycle_position = ((ctx.beat_clock / beat_period) - self.offset) % 1.0;
         } else {
             self.cycle_position =
-                ((ctx.free_clock.as_secs_f32() * 1000.0 / self.free_duration) + self.offset) % 1.0;
+                ((ctx.free_clock.as_secs_f32() * 1000.0 / self.free_duration) - self.offset) % 1.0;
         }
 
         if self.cycle_position <= self.gate {
