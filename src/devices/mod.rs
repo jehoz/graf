@@ -11,12 +11,14 @@ pub mod clock;
 pub mod gate;
 pub mod latch;
 pub mod note;
+pub mod random;
 pub mod trigger;
 
 pub use clock::Clock;
 pub use gate::Gate;
 pub use latch::Latch;
 pub use note::Note;
+pub use random::Random;
 pub use trigger::Trigger;
 
 #[derive(PartialEq, Serialize, Deserialize)]
@@ -32,6 +34,7 @@ pub enum Device {
     Gate(Gate),
     Latch(Latch),
     Note(Note),
+    Random(Random),
     Trigger(Trigger),
 }
 
@@ -42,6 +45,7 @@ impl Device {
             Device::Gate(ref mut d) => d.update(ctx, inputs),
             Device::Latch(ref mut d) => d.update(ctx, inputs),
             Device::Note(ref mut d) => d.update(ctx, inputs),
+            Device::Random(ref mut d) => d.update(ctx, inputs),
             Device::Trigger(ref mut d) => d.update(ctx, inputs),
         }
     }
@@ -52,6 +56,7 @@ impl Device {
             Device::Gate(d) => d.draw(ctx, position, size, color),
             Device::Latch(d) => d.draw(ctx, position, size, color),
             Device::Note(d) => d.draw(ctx, position, size, color),
+            Device::Random(d) => d.draw(ctx, position, size, color),
             Device::Trigger(d) => d.draw(ctx, position, size, color),
         }
     }
@@ -62,6 +67,7 @@ impl Device {
             Device::Gate(_) => {} // gates do not have any state that needs to be reset
             Device::Latch(ref mut d) => d.reset(),
             Device::Note(ref mut d) => d.reset(),
+            Device::Random(ref mut d) => d.reset(),
             Device::Trigger(ref mut d) => d.reset(),
         }
     }
@@ -72,6 +78,7 @@ impl Device {
             Device::Gate(ref mut d) => d.inspector(ui),
             Device::Latch(ref mut d) => d.inspector(ui),
             Device::Note(ref mut d) => d.inspector(ui),
+            Device::Random(ref mut d) => d.inspector(ui),
             Device::Trigger(ref mut d) => d.inspector(ui),
         }
     }
@@ -83,6 +90,7 @@ impl Device {
             Device::Gate(_) => Arity::NAry,
             Device::Latch(_) => Arity::Unary,
             Device::Note(_) => Arity::Unary,
+            Device::Random(_) => Arity::Unary,
             Device::Trigger(_) => Arity::Unary,
         }
     }

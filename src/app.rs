@@ -1,4 +1,5 @@
 use core::panic;
+use rand::prelude::*;
 use std::{
     collections::HashMap,
     error::Error,
@@ -23,7 +24,10 @@ use rfd::FileDialog;
 use crate::{
     circuit::Circuit,
     dag::{DeviceId, WireType},
-    devices::{clock::Clock, gate::Gate, latch::Latch, note::Note, trigger::Trigger, Device},
+    devices::{
+        clock::Clock, gate::Gate, latch::Latch, note::Note, random::Random, trigger::Trigger,
+        Device,
+    },
     drawing_utils::{
         color_to_color32, draw_wire_between_devices, draw_wire_from_device, ColorPalette,
     },
@@ -55,6 +59,7 @@ pub struct UpdateContext {
 
     pub is_paused: bool,
 
+    pub rng: ThreadRng,
     pub midi_config: MidiConfig,
 
     // BPM is updated by the session when context is passed to the update method so that devices
@@ -74,6 +79,7 @@ impl UpdateContext {
 
             is_paused: false,
 
+            rng: rand::rng(),
             midi_config: MidiConfig::new(),
 
             bpm: 0,
@@ -433,6 +439,13 @@ impl App {
                         self.session
                             .circuit
                             .add_device(Device::Latch(latch), world_pos);
+                        self.context_menu = None;
+                    }
+                    if ui.button("Random").clicked() {
+                        let random = Random::new();
+                        self.session
+                            .circuit
+                            .add_device(Device::Random(random), world_pos);
                         self.context_menu = None;
                     }
                     if ui.button("Gate").clicked() {
