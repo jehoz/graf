@@ -1,5 +1,5 @@
 use egui::{FontId, RichText, Slider};
-use macroquad::{math::Vec2, prelude::Color, shapes::draw_rectangle_lines};
+use macroquad::{math::Vec2, prelude::Color, shapes::{draw_line, draw_circle_lines}};
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +13,7 @@ pub struct Random {
     // the probability (between 0 and 1) of generating a true value
     probability: f32,
 
-    //
+    // randomly generated output value
     value: bool,
 
     // the value of the input from the previous frame
@@ -43,9 +43,20 @@ impl Random {
 
     pub fn draw(&self, _ctx: &DrawContext, position: V2, size: f32, color: Color) {
         let Vec2 { x, y } = position.into();
-        // let radius = size / 2.0;
 
-        draw_rectangle_lines(x - size / 2., y - size / 2., size, size, 1.0, color);
+        let r = size * 0.5;
+        let r_inner = r * 0.5;
+
+        if self.value {
+            // circle for heads
+            draw_circle_lines(x, y, r_inner, 1.0, color);
+        } else {
+            // cross for tails
+            draw_line(x - r_inner, y - r_inner, x + r_inner, y + r_inner, 1.0, color);
+            draw_line(x - r_inner, y + r_inner, x + r_inner, y - r_inner, 1.0, color);
+        }
+
+        draw_circle_lines(x, y, r, 1.0, color);
     }
 
     pub fn reset(&mut self) {}
