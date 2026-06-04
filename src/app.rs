@@ -387,6 +387,7 @@ impl App {
 
                 CreateClock => self.set_pending(Device::Clock(Clock::new()).into()),
                 CreateGate => self.set_pending(Device::Gate(Gate::new()).into()),
+                CreateRandom => self.set_pending(Device::Random(Random::new()).into()),
                 CreateTrigger => self.set_pending(Device::Trigger(Trigger::new()).into()),
                 CreateLatch => self.set_pending(Device::Latch(Latch::new()).into()),
                 CreateNote => self.set_pending(Device::Note(Note::new()).into()),

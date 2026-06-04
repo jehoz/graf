@@ -41,6 +41,7 @@ pub enum Action {
     CreateClock,
     CreateGate,
     CreateTrigger,
+    CreateRandom,
     CreateLatch,
     CreateNote,
 }
@@ -83,6 +84,7 @@ pub fn default_keybinds() -> HashMap<Input, Action> {
         (Input::new(Modifier::None, KeyCode::Space), TogglePause),
         (Input::new(Modifier::Shift, KeyCode::C), CreateClock),
         (Input::new(Modifier::Shift, KeyCode::G), CreateGate),
+        (Input::new(Modifier::Shift, KeyCode::R), CreateRandom),
         (Input::new(Modifier::Shift, KeyCode::T), CreateTrigger),
         (Input::new(Modifier::Shift, KeyCode::L), CreateLatch),
         (Input::new(Modifier::Shift, KeyCode::N), CreateNote),
