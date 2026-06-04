@@ -122,7 +122,7 @@ impl Trigger {
     }
 
     pub fn reset(&mut self) {
-        self.ready_to_fire = true;
+        self.ready_to_fire = false;
         self.time_remaining = None;
 
         self.prev_clock_time = Duration::ZERO;
