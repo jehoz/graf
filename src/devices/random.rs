@@ -1,5 +1,9 @@
 use egui::{FontId, RichText, Slider};
-use macroquad::{math::Vec2, prelude::Color, shapes::{draw_line, draw_circle_lines}};
+use macroquad::{
+    math::Vec2,
+    prelude::Color,
+    shapes::{draw_circle, draw_circle_lines, draw_line},
+};
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -41,22 +45,37 @@ impl Random {
         return Some(self.value);
     }
 
-    pub fn draw(&self, _ctx: &DrawContext, position: V2, size: f32, color: Color) {
+    pub fn draw(&self, ctx: &DrawContext, position: V2, size: f32, color: Color) {
         let Vec2 { x, y } = position.into();
 
         let r = size * 0.5;
         let r_inner = r * 0.5;
+
+        draw_circle(x, y, r, ctx.colors.bg_1);
+        draw_circle_lines(x, y, r, 1.0, color);
 
         if self.value {
             // circle for heads
             draw_circle_lines(x, y, r_inner, 1.0, color);
         } else {
             // cross for tails
-            draw_line(x - r_inner, y - r_inner, x + r_inner, y + r_inner, 1.0, color);
-            draw_line(x - r_inner, y + r_inner, x + r_inner, y - r_inner, 1.0, color);
+            draw_line(
+                x - r_inner,
+                y - r_inner,
+                x + r_inner,
+                y + r_inner,
+                1.0,
+                color,
+            );
+            draw_line(
+                x - r_inner,
+                y + r_inner,
+                x + r_inner,
+                y - r_inner,
+                1.0,
+                color,
+            );
         }
-
-        draw_circle_lines(x, y, r, 1.0, color);
     }
 
     pub fn reset(&mut self) {}
